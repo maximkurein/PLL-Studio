@@ -1,0 +1,23 @@
+name: Предложение
+description: Идея новой функции или эксперимента
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Какую задачу это решает
+      placeholder: Например — «хочу снимать АЧХ петли по реальным измерениям»
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Предлагаемое решение
+    validations:
+      required: true
+  - type: textarea
+    id: refs
+    attributes:
+      label: Ссылки на даташит / app note
+      description: Раздел даташита 8V97051, рисунок, таблица

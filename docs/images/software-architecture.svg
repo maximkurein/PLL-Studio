@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-label="Архитектура PLL Studio: интерфейс React, транспорт Tauri или HTTP, ядро pll-core на Rust, симулятор или SPI-мост к плате">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#10151f"/>
+      <stop offset="1" stop-color="#0a0e15"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#ffffff" stroke-opacity="0.025"/>
+    </pattern>
+    <marker id="aI" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#818cf8"/></marker>
+    <marker id="aC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#22d3ee"/></marker>
+    <marker id="aA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fb923c"/></marker>
+    <marker id="aG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#34d399"/></marker>
+    <clipPath id="card"><rect width="1200" height="560" rx="24"/></clipPath>
+  </defs>
+  <style>
+    .t{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+    .m{font-family:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+    .flow{stroke-dasharray:7 9;animation:flow 1.1s linear infinite}
+    @keyframes flow{to{stroke-dashoffset:-32}}
+    @media (prefers-reduced-motion:reduce){.flow{animation:none}}
+    .col{font-size:11px;letter-spacing:1.4px;fill:#7d8aa0}
+    .h{font-size:15px;font-weight:700;fill:#e8edf5}
+    .s{font-size:12px;fill:#b6c1d3}
+    .chip{font-size:11.5px;fill:#c7d2fe}
+  </style>
+
+  <g clip-path="url(#card)">
+    <rect width="1200" height="560" fill="url(#bg)"/>
+    <rect width="1200" height="560" fill="url(#grid)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1199" height="559" rx="23.5" fill="none" stroke="#222b3b"/>
+
+  <text class="t" x="51" y="52" font-size="24" font-weight="700" fill="#e8edf5">Архитектура программы</text>
+  <text class="t" x="51" y="78" font-size="14" fill="#b6c1d3">Вся физика и логика — в Rust. Один RPC обслуживает и desktop-приложение, и веб-режим.</text>
+
+  <g class="t">
+    <text x="51" y="118" class="col">ИНТЕРФЕЙС</text>
+    <text x="361" y="118" class="col">ТРАНСПОРТ</text>
+    <text x="631" y="118" class="col">ЯДРО PLL-CORE · RUST</text>
+    <text x="961" y="118" class="col">УСТРОЙСТВО</text>
+  </g>
+
+  <!-- UI column -->
+  <rect x="51" y="132" width="260" height="344" rx="14" fill="#818cf8" fill-opacity="0.06" stroke="#818cf8" stroke-opacity="0.7" stroke-width="1.4"/>
+  <g class="t">
+    <text x="71" y="160" class="h">React 19 · Tailwind 4</text>
+    <text x="71" y="179" class="s">9 экранов + SPI-консоль</text>
+  </g>
+  <g class="t" text-anchor="middle">
+    <rect x="71" y="194" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="124" y="211" class="chip">Архитектура</text>
+    <rect x="185" y="194" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="238" y="211" class="chip">Плата EVB</text>
+    <rect x="71" y="226" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="124" y="243" class="chip">Регистры</text>
+    <rect x="185" y="226" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="238" y="243" class="chip">Планировщик</text>
+    <rect x="71" y="258" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="124" y="275" class="chip">Петля ФАПЧ</text>
+    <rect x="185" y="258" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="238" y="275" class="chip">Шум и спектр</text>
+    <rect x="71" y="290" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="124" y="307" class="chip">Лаборатория</text>
+    <rect x="185" y="290" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="238" y="307" class="chip">Подключение</text>
+    <rect x="71" y="322" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="124" y="339" class="chip">Академия</text>
+    <rect x="185" y="322" width="106" height="26" rx="7" fill="#818cf8" fill-opacity="0.12"/><text x="238" y="339" class="chip">SPI-консоль</text>
+  </g>
+  <rect x="71" y="364" width="220" height="44" rx="10" fill="#0b0f18" stroke="#2d384b"/>
+  <text class="t" x="85" y="383" font-size="12.5" font-weight="600" fill="#e8edf5">zustand store</text>
+  <text class="t" x="85" y="400" font-size="11.5" fill="#7d8aa0">снимок после каждой команды</text>
+  <rect x="71" y="416" width="220" height="44" rx="10" fill="#0b0f18" stroke="#2d384b"/>
+  <text class="m" x="85" y="435" font-size="12.5" fill="#c7d2fe">rpc(cmd, args)</text>
+  <text class="m" x="85" y="452" font-size="11" fill="#7d8aa0">src/lib/api.ts</text>
+
+  <!-- transport -->
+  <rect x="361" y="152" width="220" height="112" rx="14" fill="#22d3ee" fill-opacity="0.06" stroke="#22d3ee" stroke-opacity="0.75" stroke-width="1.4"/>
+  <g class="t">
+    <text x="381" y="180" class="h">Desktop · Tauri 2</text>
+    <text class="m" x="381" y="204" font-size="12.5" fill="#67e8f9">invoke("rpc")</text>
+    <text x="381" y="226" class="s">macOS .app / .dmg</text>
+    <text x="381" y="246" class="s">Windows .exe / .msi</text>
+  </g>
+  <rect x="361" y="300" width="220" height="112" rx="14" fill="#22d3ee" fill-opacity="0.06" stroke="#22d3ee" stroke-opacity="0.75" stroke-width="1.4"/>
+  <g class="t">
+    <text x="381" y="328" class="h">Web · pll-server</text>
+    <text class="m" x="381" y="352" font-size="12.5" fill="#67e8f9">POST /api/rpc</text>
+    <text x="381" y="374" class="s">axum · 127.0.0.1:7878</text>
+    <text x="381" y="394" class="s">«удалённая лаборатория»</text>
+  </g>
+
+  <!-- core -->
+  <rect x="631" y="132" width="280" height="344" rx="14" fill="#fb923c" fill-opacity="0.05" stroke="#fb923c" stroke-opacity="0.75" stroke-width="1.4"/>
+  <rect x="649" y="148" width="244" height="64" rx="11" fill="#0b0f18" stroke="#fb923c" stroke-opacity="0.6"/>
+  <text class="m" x="667" y="174" font-size="13.5" font-weight="700" fill="#fdba74">Engine::handle(cmd, args)</text>
+  <text class="t" x="667" y="196" font-size="11.5" fill="#b6c1d3">автозапись R7→R0 · журнал SPI</text>
+  <g class="t">
+    <rect x="649" y="228" width="118" height="70" rx="10" fill="#141a26" stroke="#2d384b"/>
+    <text class="m" x="663" y="252" font-size="12.5" font-weight="700" fill="#e8edf5">regs.rs</text>
+    <text x="663" y="271" font-size="11.5" fill="#7d8aa0">карта R0–R7,</text>
+    <text x="663" y="286" font-size="11.5" fill="#7d8aa0">биты по даташиту</text>
+    <rect x="775" y="228" width="118" height="70" rx="10" fill="#141a26" stroke="#2d384b"/>
+    <text class="m" x="789" y="252" font-size="12.5" font-weight="700" fill="#e8edf5">plan.rs</text>
+    <text x="789" y="271" font-size="11.5" fill="#7d8aa0">планировщик,</text>
+    <text x="789" y="286" font-size="11.5" fill="#7d8aa0">проверки</text>
+    <rect x="649" y="306" width="118" height="70" rx="10" fill="#141a26" stroke="#2d384b"/>
+    <text class="m" x="663" y="330" font-size="12.5" font-weight="700" fill="#e8edf5">loopfilter.rs</text>
+    <text x="663" y="349" font-size="11.5" fill="#7d8aa0">фильтр, Боде,</text>
+    <text x="663" y="364" font-size="11.5" fill="#7d8aa0">захват петли</text>
+    <rect x="775" y="306" width="118" height="70" rx="10" fill="#141a26" stroke="#2d384b"/>
+    <text class="m" x="789" y="330" font-size="12.5" font-weight="700" fill="#e8edf5">noise.rs</text>
+    <text x="789" y="349" font-size="11.5" fill="#7d8aa0">фазовый шум,</text>
+    <text x="789" y="364" font-size="11.5" fill="#7d8aa0">джиттер, спуры</text>
+    <rect x="649" y="384" width="118" height="70" rx="10" fill="#141a26" stroke="#2d384b"/>
+    <text class="m" x="663" y="408" font-size="12.5" font-weight="700" fill="#e8edf5">sim.rs</text>
+    <text x="663" y="427" font-size="11.5" fill="#7d8aa0">виртуальный</text>
+    <text x="663" y="442" font-size="11.5" fill="#7d8aa0">кристалл</text>
+    <rect x="775" y="384" width="118" height="70" rx="10" fill="#141a26" stroke="#34d399" stroke-opacity="0.7"/>
+    <text class="m" x="789" y="408" font-size="12.5" font-weight="700" fill="#e8edf5">transport.rs</text>
+    <text x="789" y="427" font-size="11.5" fill="#7d8aa0">Link: симулятор</text>
+    <text x="789" y="442" font-size="11.5" fill="#7d8aa0">или SPI-мост</text>
+  </g>
+
+  <!-- device column -->
+  <g class="t">
+    <rect x="961" y="152" width="188" height="64" rx="12" fill="#a78bfa" fill-opacity="0.07" stroke="#a78bfa" stroke-opacity="0.75" stroke-width="1.4"/>
+    <text x="979" y="178" class="h">VirtualChip</text>
+    <text x="979" y="199" class="s">без платы, по даташиту</text>
+
+    <rect x="961" y="252" width="188" height="56" rx="12" fill="#34d399" fill-opacity="0.07" stroke="#34d399" stroke-opacity="0.75" stroke-width="1.4"/>
+    <text x="979" y="276" class="h">SerialBridge</text>
+    <text x="979" y="296" class="s">USB-serial · 115200</text>
+
+    <rect x="961" y="334" width="188" height="56" rx="12" fill="#34d399" fill-opacity="0.07" stroke="#34d399" stroke-opacity="0.75" stroke-width="1.4"/>
+    <text x="979" y="358" class="h">МК 3.3 В</text>
+    <text class="m" x="979" y="378" font-size="11.5" fill="#6ee7b7">firmware/spi_bridge</text>
+
+    <rect x="961" y="416" width="188" height="60" rx="12" fill="#fbbf24" fill-opacity="0.08" stroke="#fbbf24" stroke-opacity="0.8" stroke-width="1.4"/>
+    <text x="979" y="442" class="h">8V9705x EVB</text>
+    <text x="979" y="462" class="s">SPI 32 бит · MUX_OUT</text>
+  </g>
+
+  <!-- arrows -->
+  <g fill="none" stroke-width="2">
+    <path class="flow" d="M291 438H330V208H359" stroke="#818cf8" marker-end="url(#aI)"/>
+    <path class="flow" d="M330 356H359" stroke="#818cf8" marker-end="url(#aI)"/>
+    <path class="flow" d="M581 208H606V180H647" stroke="#22d3ee" marker-end="url(#aC)"/>
+    <path class="flow" d="M581 356H606V180" stroke="#22d3ee"/>
+    <path class="flow" d="M893 419H930V184H959" stroke="#fb923c" marker-end="url(#aA)"/>
+    <path class="flow" d="M930 280H959" stroke="#34d399" marker-end="url(#aG)"/>
+    <path class="flow" d="M1055 308V332" stroke="#34d399" marker-end="url(#aG)"/>
+    <path class="flow" d="M1055 390V414" stroke="#34d399" marker-end="url(#aG)"/>
+  </g>
+  <g class="t" font-size="11" fill="#7d8aa0">
+    <text x="1062" y="325">USB</text>
+    <text x="1062" y="407">SPI</text>
+  </g>
+
+  <text class="t" x="51" y="520" font-size="13" fill="#b6c1d3">Новая функция = команда в <tspan class="m" fill="#fdba74">api.rs</tspan> + типы в <tspan class="m" fill="#c7d2fe">types.ts</tspan>. Фронтенд только форматирует и рисует; графики — собственные SVG без внешних библиотек.</text>
+</svg>

@@ -1,0 +1,74 @@
+name: Ошибка
+description: Что-то не работает или ведёт себя неожиданно
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Спасибо за отчёт! Сначала проверьте последнюю версию PLL Studio.
+  - type: input
+    id: version
+    attributes:
+      label: Версия PLL Studio
+      description: Показана внизу боковой панели приложения
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Операционная система
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows 10/11
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Режим
+      options:
+        - Desktop (Tauri)
+        - Веб / удалённая лаборатория (pll-server)
+    validations:
+      required: true
+  - type: dropdown
+    id: link
+    attributes:
+      label: Подключение
+      options:
+        - Симулятор
+        - SPI-мост (последовательный порт)
+        - Другое
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги воспроизведения
+      placeholder: |
+        1. Открыть «Планировщик»
+        2. Ввести 2.45 ГГц
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Конфигурация регистров
+      description: «Регистры → Экспорт» (8 слов R0–R7) — вставьте сюда
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: SPI-консоль / журнал
+      description: Фрагмент SPI-консоли (⌘/Ctrl + J) вокруг ошибки
+      render: text

@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560" role="img" aria-label="Подключение: компьютер с PLL Studio, USB, SPI-мост 3.3 В, плата 8V9705x EVB, аттенюатор и анализатор спектра">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#10151f"/>
+      <stop offset="1" stop-color="#0a0e15"/>
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#ffffff" stroke-opacity="0.025"/>
+    </pattern>
+    <pattern id="pcb" width="10" height="10" patternUnits="userSpaceOnUse">
+      <circle cx="5" cy="5" r="0.8" fill="#34d399" fill-opacity="0.10"/>
+    </pattern>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22d3ee"/>
+      <stop offset="0.5" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <marker id="aI" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#818cf8"/></marker>
+    <marker id="aG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#34d399"/></marker>
+    <marker id="aA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#fbbf24"/></marker>
+    <clipPath id="card"><rect width="1280" height="560" rx="24"/></clipPath>
+  </defs>
+  <style>
+    .t{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+    .m{font-family:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+    .flow{stroke-dasharray:6 8;animation:flow 1.2s linear infinite}
+    @keyframes flow{to{stroke-dashoffset:-28}}
+    @media (prefers-reduced-motion:reduce){.flow{animation:none}}
+    .pin{font-size:11.5px}
+  </style>
+
+  <g clip-path="url(#card)">
+    <rect width="1280" height="560" fill="url(#bg)"/>
+    <rect width="1280" height="560" fill="url(#grid)"/>
+  </g>
+  <rect x="0.5" y="0.5" width="1279" height="559" rx="23.5" fill="none" stroke="#222b3b"/>
+
+  <text class="t" x="40" y="52" font-size="24" font-weight="700" fill="#e8edf5">Подключение платы</text>
+  <text class="t" x="40" y="78" font-size="14" fill="#b6c1d3">Без железа работает встроенный симулятор. Для реальной платы нужен 3.3-вольтовый SPI-мост с прошивкой из репозитория.</text>
+
+  <!-- computer -->
+  <rect x="40" y="160" width="170" height="120" rx="12" fill="#141a26" stroke="#2d384b" stroke-width="1.5"/>
+  <rect x="50" y="170" width="150" height="92" rx="6" fill="#0b0f18"/>
+  <rect x="58" y="178" width="20" height="20" rx="5" fill="#1a2130"/>
+  <path d="M61 190c2-5 4-5 6 0s4 5 6 0" fill="none" stroke="url(#wave)" stroke-width="2" stroke-linecap="round"/>
+  <text class="t" x="84" y="193" font-size="12" font-weight="700" fill="#e8edf5">PLL Studio</text>
+  <path d="M60 246C78 212 92 212 108 236S140 260 156 222 182 210 192 230" fill="none" stroke="url(#wave)" stroke-width="2.2" stroke-linecap="round"/>
+  <rect x="112" y="280" width="26" height="18" fill="#1a2130"/>
+  <rect x="88" y="298" width="74" height="8" rx="4" fill="#2d384b"/>
+  <text class="t" x="125" y="330" font-size="12.5" text-anchor="middle" fill="#b6c1d3">macOS · Windows</text>
+  <text class="t" x="125" y="348" font-size="11.5" text-anchor="middle" fill="#7d8aa0">или веб-режим</text>
+
+  <!-- USB -->
+  <path d="M210 230H270" fill="none" stroke="#7d8aa0" stroke-width="3" stroke-linecap="round"/>
+  <text class="t" x="240" y="220" font-size="11.5" text-anchor="middle" fill="#7d8aa0">USB</text>
+
+  <!-- MCU bridge -->
+  <rect x="270" y="120" width="180" height="270" rx="14" fill="#0f1d33" stroke="#3b5b8f" stroke-width="1.5"/>
+  <text class="t" x="288" y="148" font-size="15" font-weight="700" fill="#e8edf5">SPI-мост 3.3 В</text>
+  <text class="t" x="288" y="168" font-size="11.5" fill="#93a8c9">Nucleo · RP2040 · Arduino</text>
+  <rect x="262" y="218" width="16" height="24" rx="3" fill="#7d8aa0"/>
+  <rect x="290" y="236" width="60" height="60" rx="6" fill="#0b0f18" stroke="#3a4560"/>
+  <circle cx="298" cy="244" r="2" fill="#3a4560"/>
+  <text class="m" x="320" y="270" font-size="11" text-anchor="middle" fill="#7d8aa0">MCU</text>
+  <text class="m" x="360" y="414" font-size="11.5" text-anchor="middle" fill="#7d8aa0">firmware/spi_bridge</text>
+
+  <g class="t pin" text-anchor="end" fill="#b6c1d3">
+    <text x="440" y="204">SCK</text>
+    <text x="440" y="228">MOSI</text>
+    <text x="440" y="252">D10</text>
+    <text x="440" y="276">MISO</text>
+    <text x="440" y="300">D9</text>
+    <text x="440" y="324">D8</text>
+    <text x="440" y="348">D7</text>
+    <text x="440" y="372">GND</text>
+  </g>
+
+  <!-- EVB -->
+  <rect x="640" y="120" width="240" height="290" rx="14" fill="#0d2a20" stroke="#1f6b4f" stroke-width="1.5"/>
+  <rect x="640" y="120" width="240" height="290" rx="14" fill="url(#pcb)"/>
+  <text class="t" x="658" y="148" font-size="15" font-weight="700" fill="#e8edf5">8V9705x EVB</text>
+  <text class="t" x="658" y="168" font-size="11.5" fill="#6ee7b7">REV B · питание USB (JP3)</text>
+  <rect x="790" y="186" width="56" height="26" rx="5" fill="#0b1f2a" stroke="#22d3ee" stroke-opacity="0.7"/>
+  <text class="m" x="818" y="203" font-size="10.5" text-anchor="middle" fill="#67e8f9">TCXO</text>
+  <path d="M818 212V236" stroke="#22d3ee" stroke-opacity="0.6" stroke-width="1.4"/>
+  <rect x="770" y="236" width="76" height="76" rx="6" fill="#0b0f18" stroke="#3a4560" stroke-width="1.4"/>
+  <circle cx="779" cy="245" r="2.2" fill="#3a4560"/>
+  <text class="m" x="808" y="279" font-size="11.5" text-anchor="middle" fill="#e8edf5">8V97051</text>
+  <path d="M846 262H862V200H872M846 290H862V320H872" fill="none" stroke="#fbbf24" stroke-opacity="0.8" stroke-width="1.6"/>
+  <circle cx="880" cy="200" r="11" fill="#2a2410" stroke="#fbbf24" stroke-width="2"/>
+  <circle cx="880" cy="200" r="4" fill="#fbbf24"/>
+  <circle cx="880" cy="320" r="11" fill="#2a2410" stroke="#fbbf24" stroke-width="2"/>
+  <circle cx="880" cy="320" r="4" fill="#fbbf24"/>
+  <circle cx="770" cy="388" r="5" fill="#34d399"/>
+  <text class="t" x="782" y="392" font-size="11" fill="#6ee7b7">LD</text>
+
+  <g class="t pin" fill="#b6c1d3">
+    <text x="652" y="204">SCLK</text>
+    <text x="652" y="228">SDI</text>
+    <text x="652" y="252">nCS</text>
+    <text x="652" y="276">MUX_OUT</text>
+    <text x="652" y="300">CE</text>
+    <text x="652" y="324">MUTE</text>
+    <text x="652" y="348">LD</text>
+    <text x="652" y="372">GND</text>
+  </g>
+
+  <!-- wires -->
+  <g fill="none" stroke-width="2">
+    <path class="flow" d="M452 200H636" stroke="#818cf8" marker-end="url(#aI)"/>
+    <path class="flow" d="M452 224H636" stroke="#818cf8" marker-end="url(#aI)"/>
+    <path class="flow" d="M452 248H636" stroke="#818cf8" marker-end="url(#aI)"/>
+    <path class="flow" d="M638 272H454" stroke="#34d399" marker-end="url(#aG)"/>
+    <path d="M452 296H636" stroke="#34d399" marker-end="url(#aG)"/>
+    <path d="M452 320H636" stroke="#fbbf24" marker-end="url(#aA)"/>
+    <path d="M638 344H454" stroke="#34d399" marker-end="url(#aG)"/>
+    <path d="M452 368H638" stroke="#7d8aa0"/>
+  </g>
+  <g fill="#e8edf5">
+    <circle cx="450" cy="200" r="3"/><circle cx="450" cy="224" r="3"/><circle cx="450" cy="248" r="3"/><circle cx="450" cy="272" r="3"/>
+    <circle cx="450" cy="296" r="3"/><circle cx="450" cy="320" r="3"/><circle cx="450" cy="344" r="3"/><circle cx="450" cy="368" r="3"/>
+    <circle cx="640" cy="200" r="3"/><circle cx="640" cy="224" r="3"/><circle cx="640" cy="248" r="3"/><circle cx="640" cy="272" r="3"/>
+    <circle cx="640" cy="296" r="3"/><circle cx="640" cy="320" r="3"/><circle cx="640" cy="344" r="3"/><circle cx="640" cy="368" r="3"/>
+  </g>
+  <g class="t" font-size="11" fill="#7d8aa0" text-anchor="middle">
+    <text x="545" y="186">SPI 32 бит + CE / MUTE / LD</text>
+    <text x="545" y="266" fill="#6ee7b7">чтение регистров</text>
+  </g>
+
+  <!-- RF chain -->
+  <path class="flow" d="M891 200H908" fill="none" stroke="#fbbf24" stroke-width="2.4"/>
+  <rect x="908" y="182" width="84" height="36" rx="8" fill="#141a26" stroke="#fbbf24" stroke-opacity="0.7"/>
+  <text class="t" x="950" y="205" font-size="13" font-weight="700" text-anchor="middle" fill="#fcd34d">−10 dB</text>
+  <path class="flow" d="M992 200H1028" fill="none" stroke="#fbbf24" stroke-width="2.4" marker-end="url(#aA)"/>
+  <text class="t" x="880" y="236" font-size="11" text-anchor="middle" fill="#fcd34d">RF_OUTA</text>
+  <text class="t" x="950" y="236" font-size="11" text-anchor="middle" fill="#7d8aa0">аттенюатор</text>
+
+  <path d="M891 320H908" fill="none" stroke="#7d8aa0" stroke-width="2.4"/>
+  <rect x="908" y="304" width="84" height="32" rx="8" fill="#141a26" stroke="#2d384b"/>
+  <text class="t" x="950" y="325" font-size="12.5" font-weight="600" text-anchor="middle" fill="#b6c1d3">50 Ом</text>
+  <text class="t" x="880" y="356" font-size="11" text-anchor="middle" fill="#fcd34d">nRF_OUTA</text>
+  <text class="t" x="950" y="356" font-size="11" text-anchor="middle" fill="#7d8aa0">нагрузка</text>
+
+  <!-- analyzer -->
+  <rect x="1030" y="130" width="210" height="170" rx="12" fill="#141a26" stroke="#2d384b" stroke-width="1.5"/>
+  <rect x="1042" y="142" width="140" height="118" rx="6" fill="#07120d" stroke="#1f5a45"/>
+  <g stroke="#1f5a45" stroke-width="0.6" opacity="0.8">
+    <path d="M1042 172H1182M1042 201H1182M1042 230H1182M1077 142V260M1112 142V260M1147 142V260"/>
+  </g>
+  <path d="M1048 246L1060 244L1070 245L1080 242L1090 240L1100 236L1106 226Q1110 205 1112 152Q1114 205 1118 226L1124 236L1134 240L1144 242L1154 245L1164 244L1176 246" fill="none" stroke="#34d399" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="1210" cy="166" r="11" fill="#1a2130" stroke="#3a4560"/>
+  <circle cx="1210" cy="200" r="11" fill="#1a2130" stroke="#3a4560"/>
+  <rect x="1196" y="228" width="28" height="10" rx="3" fill="#2d384b"/>
+  <rect x="1196" y="244" width="28" height="10" rx="3" fill="#2d384b"/>
+  <text class="t" x="1112" y="282" font-size="11.5" text-anchor="middle" fill="#7d8aa0">центр 1.2345 ГГц</text>
+  <text class="t" x="1135" y="326" font-size="12.5" text-anchor="middle" fill="#b6c1d3">Анализатор спектра</text>
+
+  <!-- warnings -->
+  <g class="t">
+    <rect x="40" y="452" width="386" height="68" rx="12" fill="#fbbf24" fill-opacity="0.07" stroke="#fbbf24" stroke-opacity="0.45"/>
+    <path d="M66 472L78 494H54Z" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M66 480V487M66 490.5V491" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+    <text x="92" y="480" font-size="13" font-weight="700" fill="#fde68a">Логика моста — только 3.3 В</text>
+    <text x="92" y="502" font-size="12" fill="#b6c1d3">5-вольтовые платы — через преобразователь уровней</text>
+
+    <rect x="447" y="452" width="386" height="68" rx="12" fill="#fbbf24" fill-opacity="0.07" stroke="#fbbf24" stroke-opacity="0.45"/>
+    <path d="M473 472L485 494H461Z" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M473 480V487M473 490.5V491" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+    <text x="499" y="480" font-size="13" font-weight="700" fill="#fde68a">Изолируйте штатный USB-мост EVB</text>
+    <text x="499" y="502" font-size="12" fill="#b6c1d3">от линий SPI: на шине должен быть один ведущий</text>
+
+    <rect x="854" y="452" width="386" height="68" rx="12" fill="#fbbf24" fill-opacity="0.07" stroke="#fbbf24" stroke-opacity="0.45"/>
+    <path d="M880 472L892 494H868Z" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M880 480V487M880 490.5V491" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+    <text x="906" y="480" font-size="13" font-weight="700" fill="#fde68a">Аттенюатор перед анализатором</text>
+    <text x="906" y="502" font-size="12" fill="#b6c1d3">до +7 dBm на RF_OUTA; без постоянки на SMA</text>
+  </g>
+</svg>

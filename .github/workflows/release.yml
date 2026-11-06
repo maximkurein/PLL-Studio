@@ -1,0 +1,57 @@
+name: Release
+
+# Публикация релиза: создайте тег vX.Y.Z (совпадающий с config/version.json)
+#   git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Тег совпадает с config/version.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          V=$(python3 -c "import json;print(json.load(open('config/version.json'))['app_info']['version'])")
+          test "v$V" = "${GITHUB_REF_NAME}" || { echo "Тег ${GITHUB_REF_NAME} ≠ v$V"; exit 1; }
+          python3 tools/update_version.py status
+
+  build:
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            args: --target universal-apple-darwin
+          - os: windows-latest
+            args: ""
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ startsWith(matrix.os, 'macos') && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "PLL Studio ${{ github.ref_name }}"
+          releaseBody: "Изменения — в CHANGELOG.md. Контрольные суммы — в описании ассетов."
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
