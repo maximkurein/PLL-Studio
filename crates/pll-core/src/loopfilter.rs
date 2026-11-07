@@ -61,9 +61,9 @@ pub struct LoopFilter {
 
 impl Default for LoopFilter {
     fn default() -> Self {
-        // ≈100 kHz loop for ICP = 2.5 mA, N = 100, fPFD = 25 MHz, Kvco = 40 MHz/V
-        // (datasheet procedure, α = β = γ = 4, E12/E24 values)
-        LoopFilter { order: 3, c1: 680e-12, c2: 10e-9, r2: 620.0, r3: 910.0, c3: 100e-12 }
+        // EVB schematic Rev A, 2015-05-14, sheet 1: C23, C22, R9 (+ R7=0), R6, C24.
+        // Timing Commander examples use Rp2=500 Ω; the fitted schematic says 510 Ω.
+        LoopFilter { order: 3, c1: 2.7e-9, c2: 47e-9, r2: 360.0, r3: 510.0, c3: 2.2e-9 }
     }
 }
 
@@ -97,11 +97,26 @@ impl LoopFilter {
         1.0 / (2.0 * PI * self.r2 * self.c2)
     }
     pub fn pole1_hz(&self) -> f64 {
+        if self.order >= 3 {
+            return self.third_order_poles().0;
+        }
         let cs = self.c1 * self.c2 / (self.c1 + self.c2);
         1.0 / (2.0 * PI * self.r2 * cs)
     }
     pub fn pole2_hz(&self) -> Option<f64> {
-        (self.order >= 3).then(|| 1.0 / (2.0 * PI * self.r3 * self.c3))
+        (self.order >= 3).then(|| self.third_order_poles().1)
+    }
+
+    /// Coupled RC poles: vendor LF workbook rev1.0, cells B54:B60.
+    /// Z(s) = (1 + s R2 C2) / [s (a0 + s a1 + s² a2)].
+    fn third_order_poles(&self) -> (f64, f64) {
+        let a0 = self.c1 + self.c2 + self.c3;
+        let a1 = self.c2 * self.r2 * (self.c1 + self.c3)
+            + self.c3 * self.r3 * (self.c1 + self.c2);
+        let a2 = self.c1 * self.c2 * self.c3 * self.r2 * self.r3;
+        let root = (a1 * a1 - 4.0 * a0 * a2).max(0.0).sqrt();
+        // Rationalized low root avoids cancellation for widely separated poles.
+        (2.0 * a0 / (a1 + root) / (2.0 * PI), (a1 + root) / (2.0 * a2) / (2.0 * PI))
     }
 }
 
@@ -389,10 +404,31 @@ mod tests {
 
     #[test]
     fn default_filter_is_stable_at_starter_icp() {
-        let p = params();
-        let a = analyze(&LoopFilter::default(), &p);
-        assert!(a.stable && a.pm_deg > 40.0, "pm {} fc {}", a.pm_deg, a.fc_hz);
+        let settings = crate::api::Settings::default();
+        let d = crate::plan::derive(&crate::regs::starter(), settings.ref_hz, settings.rcp_ohm);
+        let p = LoopParams { icp_a: d.icp_ma * 1e-3, kvco_hz_v: settings.kvco_hz_v, n: d.n_loop, f_pfd: d.f_pfd };
+        let a = analyze(&settings.loop_filter, &p);
+        assert!(a.stable && a.pm_deg > 35.0, "pm {} fc {}", a.pm_deg, a.fc_hz);
         assert!(a.fc_hz > 20e3 && a.fc_hz < 120e3, "fc {}", a.fc_hz);
+    }
+
+    #[test]
+    fn poles_match_vendor_workbook() {
+        // 8v97051_LF_Calc B42:B51 inputs, B59:B60 cached reference results.
+        // Workbook uses 3.14 for π; allow its 0.051% rounding difference.
+        let lf = LoopFilter { order: 3, c1: 2.7e-9, c2: 47e-9, r2: 360.0, r3: 500.0, c3: 0.486e-9 };
+        assert!((lf.pole1_hz() / 142_593.530_122_606 - 1.0).abs() < 0.0006);
+        assert!((lf.pole2_hz().unwrap() / 803_883.431_246_466 - 1.0).abs() < 0.0006);
+        // Verify the pole factorization against the independent nodal model z().
+        for f in [1e3, 30e3, 150e3, 800e3, 10e6] {
+            let s = C64::new(0.0, 2.0 * PI * f);
+            let den = s.scale(lf.c1 + lf.c2 + lf.c3)
+                .mul(C64::new(1.0, f / lf.pole1_hz()))
+                .mul(C64::new(1.0, f / lf.pole2_hz().unwrap()));
+            let expected = C64::new(1.0, 2.0 * PI * f * lf.r2 * lf.c2).div(den);
+            let actual = lf.z(2.0 * PI * f);
+            assert!((actual.re - expected.re).hypot(actual.im - expected.im) / expected.abs() < 1e-12);
+        }
     }
 
     #[test]

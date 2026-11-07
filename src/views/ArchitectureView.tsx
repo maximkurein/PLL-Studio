@@ -213,7 +213,7 @@ function Diagram({ snap, sel, onSel }: { snap: Snapshot; sel: string | null; onS
         8V97051
       </text>
       <text x={238} y={58} fontSize={10.5} fill="var(--muted)">
-        широкополосный синтезатор 34.375 МГц – 4.4 ГГц · Int-N / Frac-N · VFQFN-48
+        широкополосный синтезатор 34.375 МГц – 4.4 ГГц · Int-N / Frac-N · 32-VFQFN
       </text>
       {!powered && (
         <text x={570} y={58} fontSize={11} fill="var(--err)" textAnchor="middle">
@@ -682,6 +682,7 @@ function Inspector({ id }: { id: string }) {
               { value: "sma", label: "Внешний SMA J1" },
             ]}
           />
+          <p className="text-[12px] text-muted">Источник для расчётов. Подключение J1 требует доработки платы по руководству EVB, стр. 11.</p>
           {snap.settings.ref_source === "sma" && (
             <div className="flex items-center gap-2 text-[12px] text-muted">
               Частота опоры <FreqField hz={snap.settings.ref_hz} onCommit={(hz) => setSettings({ ref_hz: hz })} />

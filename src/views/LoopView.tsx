@@ -173,6 +173,7 @@ export function LoopView() {
         <div className="flex flex-col gap-4">
           <Card title="Текущий фильтр" subtitle="Значения редактируются: 680p, 10n, 1.2k …">
             <FilterSchematic lf={preview?.filter ?? lf} />
+            <Hint>EVB Rev A: C1 = C23 (2.7 нФ), C2 = C22 (47 нФ), R2 = R9 + R7 (360 Ом), R3 = R6 (510 Ом), C3 = C24 (2.2 нФ). Сверьте с монтажом вашей платы.</Hint>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2 text-[12px]">
               <label className="flex items-center justify-between gap-2">
                 C1 <EngField value={lf.c1} onCommit={(v) => setLf({ c1: v })} fmt={fmtFarad} />
@@ -199,8 +200,7 @@ export function LoopView() {
               )}
             </div>
             <Hint>
-              Значения по умолчанию — расчётная модель. Сверьте их с компонентами на вашей плате (рядом с выводами CP_OUT/VTUNE) и впишите фактические —
-              от них зависят все расчёты шума и переходного процесса.
+              Сохранённые настройки не заменяются номиналами EVB автоматически. Введите фактические компоненты вашей платы; изменение этих полей меняет расчёт, а не физический фильтр.
             </Hint>
           </Card>
 

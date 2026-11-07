@@ -7,6 +7,8 @@ use serde::Serialize;
 use std::io::{BufRead, BufReader, Write};
 use std::time::Duration;
 
+pub mod evb;
+
 #[derive(Serialize, Clone, Debug)]
 pub struct LinkCaps {
     pub readback: bool,
@@ -224,6 +226,7 @@ pub struct UsbDev {
 
 fn vendor_hint(vid: u16, pid: u16) -> (Option<&'static str>, bool) {
     match (vid, pid) {
+        (0x0403, 0x6010) => (Some("FT2232 — кандидат штатного моста EVB (канал A → I²C → SC18IS602); проверьте, что это ваша плата"), true),
         (0x0403, _) => (Some("FTDI — типичный USB-SPI мост (MPSSE: FT232H/FT2232H/FT4232H)"), true),
         (0x04B4, _) => (Some("Cypress/Infineon — USB-мост (FX2LP / CY7C652xx)"), true),
         (0x10C4, 0x87A0) => (Some("Silicon Labs CP2130 — USB-SPI мост"), true),

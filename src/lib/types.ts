@@ -94,10 +94,17 @@ export interface Settings {
 }
 
 export interface LinkInfo {
-  kind: "sim" | "serial" | string;
+  kind: "sim" | "serial" | "evb_usb" | string;
   name: string;
   detail: string;
   caps: { readback: boolean; ld: boolean; ce: boolean; mute: boolean };
+}
+
+export interface EvbUsbDevice {
+  selector: { bus: number; address: number; serial: string | null };
+  product: string | null;
+  manufacturer: string | null;
+  device_version: number;
 }
 
 export interface SimStatus {

@@ -41,7 +41,8 @@ impl Default for Settings {
         Settings {
             ref_hz: 25e6,
             ref_source: "tcxo".into(),
-            rcp_ohm: 5100.0,
+            // EVB schematic Rev A (2015-05-14), sheet 1, R5.
+            rcp_ohm: 4700.0,
             kvco_hz_v: plan::KVCO_TYP,
             loop_filter: LoopFilter::default(),
             ref_noise: noise::default_ref_noise(),
@@ -220,6 +221,8 @@ impl Engine {
             Ok(m) => (true, Some(*m)),
             Err(e) => {
                 self.link_error = Some(e.to_string());
+                self.dev_regs = None;
+                self.readback = None;
                 (false, None)
             }
         };
@@ -251,19 +254,22 @@ impl Engine {
     fn write_reg(&mut self, r: usize, note: &str) -> Result<()> {
         let w = self.config_word(r);
         self.xfer(w, "write", note)?;
-        let mut d = self.dev_regs.unwrap_or_else(Self::defaults_written);
-        d[r] = w;
-        self.dev_regs = Some(d);
+        if let Some(d) = self.dev_regs.as_mut() {
+            d[r] = w;
+        }
         Ok(())
     }
 
     pub fn write_all(&mut self) -> Result<Vec<usize>> {
+        // A partial write must not turn unknown hardware state into assumed defaults.
+        self.dev_regs = None;
         let mut v = vec![];
         for r in (0..NUM_REGS).rev() {
             let note = if r == 0 { "R0 последним: применение буферов и калибровка ГУН" } else { "полная запись R7→R0" };
             self.write_reg(r, note)?;
             v.push(r);
         }
+        self.dev_regs = Some(std::array::from_fn(|r| self.config_word(r)));
         Ok(v)
     }
 
@@ -309,6 +315,15 @@ impl Engine {
     // ───────────── readback ─────────────
 
     pub fn read_register(&mut self, r: usize) -> Result<u32> {
+        if !self.link.info().caps.readback {
+            return Err(Error::Invalid("Транспорт не поддерживает чтение регистров".into()));
+        }
+        if self.link.info().kind == "evb_usb" && self.dev_regs.is_none() {
+            return Err(Error::Invalid("Сначала запишите полную конфигурацию кнопкой «Записать»: для чтения нужно знать R2 и безопасно переключить MUX_OUT в SDO".into()));
+        }
+        if self.link.info().kind == "evb_usb" && self.dev_regs.is_some_and(|d| regs::get(&d, "SCLKE") != 1) {
+            return Err(Error::Invalid("Для чтения через штатный USB (SPI mode 0) задайте SCLKE = 1 и запишите R7".into()));
+        }
         let dev = self.dev_regs.unwrap_or_else(Self::defaults_written);
         let mux = regs::get(&dev, "MUX_OUT");
         let r2_orig = dev[2];
@@ -324,6 +339,10 @@ impl Engine {
         let miso = self.xfer(r7, "read", &format!("чтение R{} (кадр записи R7 с SPI_R_WN = 0)", r))?;
         if mux != 7 {
             self.xfer(r2_orig, "write", "восстановление MUX_OUT")?;
+        }
+        if self.link.info().kind == "evb_usb" && r == 7 && (miso == 0 || miso == u32::MAX) {
+            self.readback = None;
+            return Err(Error::Link("Нет достоверного SDO от синтезатора: R7 вернулся сплошными 0/1. На схеме EVB Rev A R2 в цепи MUX_OUT → MISO помечен NP; проверьте его монтаж и питание синтезатора. ACK моста не подтверждает запись PLL.".into()));
         }
         let (mut words, mut valid, mut matches) = self.readback.unwrap_or(([0; NUM_REGS], [false; NUM_REGS], [false; NUM_REGS]));
         words[r] = miso;
@@ -704,6 +723,7 @@ impl Engine {
 
             "list_ports" => Ok(serde_json::to_value(transport::list_ports())?),
             "scan_usb" => Ok(serde_json::to_value(transport::scan_usb()?)?),
+            "list_evb_usb" => Ok(serde_json::to_value(transport::evb::list_devices()?)?),
             "connect" => {
                 let kind: String = arg(a, "kind")?;
                 match kind.as_str() {
@@ -721,6 +741,14 @@ impl Engine {
                         self.dev_regs = None;
                         self.note(format!("Подключён SPI-мост {} ({}) — состояние кристалла неизвестно", path, id));
                     }
+                    "evb_usb" => {
+                        let selector: transport::evb::EvbSelector = arg(a, "device")?;
+                        let b = transport::evb::EvbBridge::open(&selector)?;
+                        self.link = Box::new(b);
+                        self.dev_regs = None;
+                        self.auto_apply = false;
+                        self.note("Подключён штатный USB EVB. Регистры PLL не записывались; авто-запись выключена. Проверьте конфигурацию и нажмите «Записать». CE/MUTE задаются JP2/JP1; LD через USB не читается.");
+                    }
                     other => return Err(Error::Invalid(format!("неизвестный тип подключения {}", other))),
                 }
                 self.readback = None;
@@ -733,6 +761,10 @@ impl Engine {
                 Ok(self.snapshot())
             }
             "set_pins" => {
+                let caps = self.link.info().caps;
+                if (a.get("ce").is_some() && !caps.ce) || (a.get("muted").is_some() && !caps.mute) {
+                    return Err(Error::Invalid("Эти выводы не управляются текущим транспортом. На EVB используйте JP2 (CE), JP1 (MUTE) или поля разрешения RF-выходов.".into()));
+                }
                 if let Some(ce) = opt::<bool>(a, "ce") {
                     self.link.set_ce(ce)?;
                     self.ce = ce;
@@ -778,6 +810,60 @@ impl Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct TestUsbLink {
+        chip: VirtualChip,
+        frames: std::sync::Arc<std::sync::Mutex<Vec<u32>>>,
+        fail_at: Option<usize>,
+    }
+    impl Link for TestUsbLink {
+        fn info(&self) -> transport::LinkInfo {
+            transport::LinkInfo { kind: "evb_usb", name: "test".into(), detail: String::new(),
+                caps: transport::LinkCaps { readback: true, ce: false, mute: false, ld: false } }
+        }
+        fn transfer(&mut self, word: u32) -> Result<u32> {
+            let mut frames = self.frames.lock().unwrap();
+            frames.push(word);
+            if self.fail_at == Some(frames.len()) { return Err(Error::Link("test disconnect".into())); }
+            Ok(self.chip.transfer(word))
+        }
+        fn set_ce(&mut self, _: bool) -> Result<()> { panic!("unsupported CE must be rejected before transport") }
+        fn set_mute(&mut self, _: bool) -> Result<()> { panic!("unsupported MUTE must be rejected before transport") }
+        fn read_ld(&mut self) -> Result<Option<bool>> { Ok(None) }
+    }
+
+    #[test]
+    fn native_usb_requires_known_configuration_and_respects_capabilities() {
+        let mut e = Engine::new(None);
+        let frames = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        e.link = Box::new(TestUsbLink { chip: VirtualChip::new(Engine::env_of(&e.settings)), frames: frames.clone(), fail_at: None });
+        e.dev_regs = None;
+        e.auto_apply = false;
+        assert!(e.read_register(0).is_err());
+        assert!(e.handle("set_pins", json!({"ce": false, "muted": true})).is_err());
+        assert!(frames.lock().unwrap().is_empty());
+        assert!(e.status()["ld"].is_null());
+        e.handle("apply", json!({})).unwrap();
+        assert_eq!(frames.lock().unwrap().iter().map(|w| w & 7).collect::<Vec<_>>(), vec![7, 6, 5, 4, 3, 2, 1, 0]);
+        e.handle("read_all", json!({})).unwrap();
+        assert!(e.readback.unwrap().2.iter().all(|v| *v));
+        assert!(e.sim_status().is_none());
+    }
+
+    #[test]
+    fn partial_usb_write_keeps_entire_configuration_unknown() {
+        let mut e = Engine::new(None);
+        let frames = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        e.link = Box::new(TestUsbLink { chip: VirtualChip::new(Engine::env_of(&e.settings)), frames: frames.clone(), fail_at: Some(3) });
+        assert!(e.write_all().is_err());
+        assert_eq!(frames.lock().unwrap().len(), 3);
+        assert!(e.dev_regs.is_none());
+        assert!(e.readback.is_none());
+        assert!(e.snapshot()["dirty"].as_array().unwrap().iter().all(|x| x == true));
+        // Readback must not write a guessed R2 while the real state is unknown.
+        assert!(e.read_register(0).is_err());
+        assert_eq!(frames.lock().unwrap().len(), 3);
+    }
 
     #[test]
     fn rpc_roundtrip() {

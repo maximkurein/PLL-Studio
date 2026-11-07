@@ -689,6 +689,28 @@ mod tests {
     }
 
     #[test]
+    fn vendor_timing_commander_examples() {
+        // IDT example .tcs files, 2015-05-20, Byte# 00..07, RF_IN=25 MHz.
+        // Source: 8V97051_Example_Timing_Commander_Configuration_Files.zip.
+        // Keep only numeric test vectors; CI does not need the local info/ archive.
+        let cases: [(f64, Words); 6] = [
+            (1525680000.0, [0x001e8370, 0x00007ef1, 0x62006442, 0x0080832b, 0x009652bc, 0x00400005, 0x00c40006, 0x02d08887]),
+            (1650000000.0, [0x00210000, 0x00007ff9, 0x02006542, 0x0080832b, 0x009652bc, 0x00400005, 0x00040006, 0x02d0f087]),
+            (2200000000.0, [0x00160000, 0x00007ff9, 0x02006342, 0x0080832b, 0x008652bc, 0x00400005, 0x00040006, 0x02d0f087]),
+            (4400000000.0, [0x002c0000, 0x00007ff9, 0x02006742, 0x0080832b, 0x008652bc, 0x00400005, 0x00040006, 0x02d0f087]),
+            (695680000.0, [0x001bd310, 0x00007ef1, 0x62006442, 0x0080832b, 0x00a652bc, 0x00400005, 0x00c40006, 0x02d08887]),
+            (700000000.0, [0x001c0000, 0x00007ff9, 0x02006542, 0x0080832b, 0x00a652bc, 0x00400005, 0x00040006, 0x02d0f087]),
+        ];
+        for (expected_hz, words) in cases {
+            let d = derive(&words, 25e6, 4700.0);
+            assert!((d.f_out_a - expected_hz).abs() < 1.0, "{}: {}", expected_hz, d.f_out_a);
+            assert_eq!(d.f_pfd, 50e6);
+            assert!(d.out_a_en);
+            assert!(!d.out_b_en);
+        }
+    }
+
+    #[test]
     fn plans_exact_fractional() {
         let r = plan(&req(1_234_567_890.0));
         assert!(r.error.is_none(), "{:?}", r.error);

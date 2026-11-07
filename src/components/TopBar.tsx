@@ -28,7 +28,7 @@ export function TopBar() {
   const go = useStore((s) => s.go);
   const sim = useSim();
   const d = snap.derived;
-  const li = lockInfo(sim, status?.ld);
+  const li = lockInfo(sim, snap.link.caps.ld ? status?.ld : null);
   const dirty = snap.dirty.filter(Boolean).length;
   const errors = d.issues.filter((i) => i.level === "error").length;
   const outLive = sim ? sim.outputs_live : d.out_a_en && !snap.pins.muted;
@@ -120,17 +120,19 @@ export function TopBar() {
           size="sm"
           variant="ghost"
           icon={<Power size={14} />}
-          active={snap.pins.ce}
+          active={snap.link.caps.ce && snap.pins.ce}
+          disabled={!snap.link.caps.ce}
           onClick={() => call("set_pins", { ce: !snap.pins.ce })}
-          title={snap.pins.ce ? "CE = 1 (кристалл включён). Нажмите, чтобы выключить" : "CE = 0 (кристалл выключен)"}
+          title={!snap.link.caps.ce ? "CE задаётся перемычкой JP2 и не считывается через USB" : snap.pins.ce ? "CE = 1 (кристалл включён). Нажмите, чтобы выключить" : "CE = 0 (кристалл выключен)"}
         />
         <Button
           size="sm"
           variant="ghost"
           icon={snap.pins.muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
           active={snap.pins.muted}
+          disabled={!snap.link.caps.mute}
           onClick={() => call("set_pins", { muted: !snap.pins.muted })}
-          title={snap.pins.muted ? "MUTE активен — выходы заглушены" : "Заглушить RF-выходы выводом MUTE"}
+          title={!snap.link.caps.mute ? "MUTE задаётся перемычкой JP1; доступны поля RF_OUTA_EN/RF_OUTB_EN" : snap.pins.muted ? "MUTE активен — выходы заглушены" : "Заглушить RF-выходы выводом MUTE"}
         />
         <Button
           size="sm"

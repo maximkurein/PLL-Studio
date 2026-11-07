@@ -16,18 +16,18 @@ interface Spot {
 
 const SPOTS: Spot[] = [
   { id: "usb", x: 64, y: 120, title: "USB-разъём", desc: "Питание платы и связь с ПК через штатный USB-мост (Timing Commander). Плата поставляется с питанием от USB.", go: ["hardware"] },
-  { id: "mcu", x: 180, y: 120, title: "USB-контроллер (мост USB→SPI)", desc: "Преобразует команды с ПК в SPI-кадры для 8V97051. Тип микросхемы определите сканером USB на вкладке «Подключение».", go: ["hardware"] },
-  { id: "jp3", x: 180, y: 222, title: "JP3 — выбор питания", desc: "Положение USB — питание от USB (по умолчанию). Положение EXT — от внешнего источника 3.3 В через клеммы. Перед первым включением проверьте положение JP3." },
-  { id: "pwr", x: 72, y: 430, title: "Клеммы внешнего питания", desc: "+3.3 В и GND для питания от лабораторного источника (меньше шумов, чем USB). Ограничьте ток источника ~400 мА." },
+  { id: "mcu", x: 180, y: 120, title: "Штатный мост USB → I²C → SPI", desc: "По схеме Rev A: U5 FTDI передаёт I²C-команды в U4 SC18IS602, который формирует SPI. Для штатного пути доступен экспериментальный режим «Штатный USB платы EVB» в разделе «Подключение». Это не последовательный мост PLLBRIDGE.", go: ["hardware"] },
+  { id: "jp3", x: 180, y: 222, title: "JP3 — выбор питания", desc: "Положение USB — питание от USB (по умолчанию). Положение EXT — от внешнего источника 4 В на LDO_PWR (J6), GND — J7. Перед первым включением проверьте положение JP3." },
+  { id: "pwr", x: 72, y: 430, title: "Клеммы внешнего питания", desc: "Внешний источник 4 В: плюс на J6 (LDO_PWR), общий на J7 (GND), JP3 в положении внешнего питания. Это вход LDO, а не шина питания кристалла. Руководство Rev A, стр. 10." },
   { id: "ldo", x: 210, y: 410, title: "Стабилизаторы (LDO) и фильтры питания", desc: "Отдельные домены VDDA, VDD_CP, VDD_VCO, VDDD — шум питания ГУН напрямую превращается в фазовый шум.", go: ["hardware"] },
   { id: "tcxo", x: 340, y: 150, title: "TCXO 25 МГц", desc: "Термокомпенсированный кварцевый генератор — опора по умолчанию. Его фазовый шум внутри полосы петли умножается на 20·log(fVCO/25 МГц).", go: ["arch", "ref"] },
-  { id: "j1", x: 340, y: 38, title: "SMA J1 — внешняя опора REF_IN", desc: "Вход внешнего опорного сигнала 5…310 МГц (например, 10/100 МГц от стандарта частоты). Переключение источника — на схеме архитектуры.", go: ["arch", "ref"] },
-  { id: "chip", x: 500, y: 290, title: "8V97051 (VFQFN-48, 7×7 мм)", desc: "Сам синтезатор: PFD, накачка, ГУН 2.2–4.4 ГГц, Frac-N делитель, M0, выходы. Откройте интерактивную архитектуру, чтобы изучить каждый блок.", go: ["arch", "vco"] },
-  { id: "lf", x: 628, y: 250, title: "Петлевой фильтр", desc: "RC-компоненты между CP_OUT и VTUNE. Их номиналы задают полосу петли — впишите реальные значения во вкладке «Петля ФАПЧ».", go: ["loop"] },
+  { id: "j1", x: 340, y: 38, title: "SMA J1 — внешняя опора REF_IN", desc: "Вход внешнего опорного сигнала 5…310 МГц (например, 10/100 МГц от стандарта частоты). Требуется доработка платы: удалить R20/R1, установить C3, R3 и заменить C4 по руководству, стр. 11. Выбор в программе только задаёт источник для расчётов.", go: ["arch", "ref"] },
+  { id: "chip", x: 500, y: 290, title: "8V97051 (32-VFQFN, 5×5 мм)", desc: "Сам синтезатор: PFD, накачка, ГУН 2.2–4.4 ГГц, Frac-N делитель, M0, выходы. Откройте интерактивную архитектуру, чтобы изучить каждый блок.", go: ["arch", "vco"] },
+  { id: "lf", x: 628, y: 250, title: "Петлевой фильтр", desc: "По схеме Rev A: C23=2.7 нФ, C22=47 нФ, R9=360 Ом, R7=0 Ом, R6=510 Ом, C24=2.2 нФ. R5 (RCP)=4.7 кОм. Эти значения используются для новых настроек; сохранённые настройки не заменяются.", go: ["loop"] },
   { id: "outa", x: 846, y: 214, title: "SMA RF_OUTA", desc: "Прямой выход A (34.375 МГц – 4.4 ГГц, до +7 dBm). Подключайте к анализатору 50 Ом, желательно через аттенюатор 10 дБ.", go: ["arch", "outa"] },
   { id: "nouta", x: 846, y: 366, title: "SMA nRF_OUTA", desc: "Инверсный выход A. Неиспользуемый выход нагрузите на 50 Ом. Вместе с RF_OUTA — дифференциальный сигнал (+3 дБ мощности через балун).", go: ["arch", "outa"] },
   { id: "ld", x: 640, y: 436, title: "Светодиод LD", desc: "Горит при захвате PLL (вывод LD в режиме Digital Lock Detect). В приложении состояние дублируется индикатором в верхней панели.", go: ["arch", "ld"] },
-  { id: "ce", x: 420, y: 452, title: "CE — перемычка/контроль", desc: "Chip Enable: 0 выключает кристалл. На плате управляется перемычкой или контроллером.", go: ["arch", "pins"] },
+  { id: "ce", x: 420, y: 452, title: "JP2 — CE / JP1 — MUTE", desc: "JP2 (CE): 0 выключает кристалл; JP1 (MUTE): 0 глушит выходы. По руководству обе перемычки можно оставить разомкнутыми для нормальной работы. JP3 выбирает питание.", go: ["arch", "pins"] },
   { id: "spi", x: 300, y: 474, title: "Линии SPI и MUX_OUT", desc: "SCLK, SDI, nCS и MUX_OUT/SDO. Сюда можно подключить внешний SPI-мост (см. схему на вкладке «Подключение»).", go: ["hardware"] },
 ];
 
@@ -35,7 +35,7 @@ function Board({ sel, onSel }: { sel: string | null; onSel: (id: string) => void
   const snap = useStore((s) => s.snap)!;
   const sim = useSim();
   const status = useStore((s) => s.status);
-  const li = lockInfo(sim, status?.ld);
+  const li = lockInfo(sim, snap.link.caps.ld ? status?.ld : null);
   const ldOn = li.tone === "ok";
   const outOn = sim ? sim.outputs_live : snap.derived.out_a_en && !snap.pins.muted;
   const pcb = "#0f3b2f",
@@ -78,7 +78,7 @@ function Board({ sel, onSel }: { sel: string | null; onSel: (id: string) => void
         <circle key={x + "-" + y} cx={x} cy={y} r={8} fill="#0a2a21" stroke={copper} strokeWidth={2} />
       ))}
       <text x={60} y={508} fontSize={13} fill={silk} fontWeight={700} letterSpacing={1}>
-        8V9705x EVB · REV B
+        8V9705x EVB · Rev A (2015)
       </text>
 
       {/* traces */}
@@ -102,7 +102,7 @@ function Board({ sel, onSel }: { sel: string | null; onSel: (id: string) => void
       {/* MCU */}
       <rect x={150} y={92} width={60} height={60} rx={4} fill="#1d2126" stroke="#444a52" />
       <text x={180} y={127} textAnchor="middle" fontSize={9} fill="#8b929c">
-        USB MCU
+        USB / I²C
       </text>
       {/* power LED */}
       <circle cx={120} cy={70} r={6} fill="#5be38f" filter="url(#glow)" />
@@ -122,7 +122,7 @@ function Board({ sel, onSel }: { sel: string | null; onSel: (id: string) => void
       <circle cx={60} cy={410} r={16} fill="#c43b3b" stroke="#7d1f1f" strokeWidth={2} />
       <circle cx={60} cy={460} r={16} fill="#222" stroke="#000" strokeWidth={2} />
       <text x={84} y={414} fontSize={10} fill={silk}>
-        +3.3V
+        4V LDO
       </text>
       <text x={84} y={464} fontSize={10} fill={silk}>
         GND
@@ -144,12 +144,12 @@ function Board({ sel, onSel }: { sel: string | null; onSel: (id: string) => void
       </text>
       {/* chip */}
       <rect x={455} y={245} width={90} height={90} rx={6} fill="#181b20" stroke="#5b616b" />
-      {Array.from({ length: 12 }, (_, i) => (
+      {Array.from({ length: 8 }, (_, i) => (
         <g key={i} fill={copper}>
-          <rect x={461 + i * 6.6} y={240} width={3} height={5} />
-          <rect x={461 + i * 6.6} y={335} width={3} height={5} />
-          <rect x={450} y={251 + i * 6.6} width={5} height={3} />
-          <rect x={545} y={251 + i * 6.6} width={5} height={3} />
+          <rect x={461 + i * 10} y={240} width={3} height={5} />
+          <rect x={461 + i * 10} y={335} width={3} height={5} />
+          <rect x={450} y={251 + i * 10} width={5} height={3} />
+          <rect x={545} y={251 + i * 10} width={5} height={3} />
         </g>
       ))}
       <circle cx={465} cy={255} r={3} fill="#5b616b" />
@@ -213,9 +213,9 @@ const CHECKLIST = [
   "JP3 в положении USB (питание от USB)",
   "Кабель USB подключён, светится PWR",
   "RF_OUTA → анализатор спектра через аттенюатор 10 дБ, nRF_OUTA нагружен на 50 Ом",
-  "Подключение выбрано (симулятор или SPI-мост)",
+  "Подключение выбрано (симулятор, USB EVB или SPI-мост)",
   "Частота задана в планировщике, RF_OUTA включён",
-  "Индикатор захвата зелёный, несущая видна на анализаторе",
+  "Захват проверен по LD на плате или доступному индикатору; несущая видна на анализаторе",
 ];
 
 export function BoardView() {
@@ -242,7 +242,7 @@ export function BoardView() {
 
   return (
     <div className="max-w-[1600px]">
-      <PageHeader icon={<CircuitBoard size={20} />} title="Оценочная плата 8V9705x EVB" subtitle="Схематичный вид платы REV B. Нажмите на номер, чтобы узнать назначение элемента. Расположение условное — сверяйтесь с вашей платой." />
+      <PageHeader icon={<CircuitBoard size={20} />} title="Оценочная плата 8V9705x EVB" subtitle="Схематичный вид платы Rev A (2015). Нажмите на номер, чтобы узнать назначение элемента. Расположение условное — сверяйтесь с вашей платой." />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card bodyClass="!p-3">
           <Board sel={sel} onSel={setSel} />
@@ -270,10 +270,11 @@ export function BoardView() {
           </Card>
           <Card title="Безопасность" icon={<ShieldAlert size={15} />}>
             <ul className="text-[12px] text-fg2 leading-relaxed list-disc ml-4 space-y-1">
-              <li>Питание 3.3 В ±5 %. Не подавайте больше 3.6 В на клеммы.</li>
+              <li>Внешнее питание: 4 В на J6 (LDO_PWR), GND на J7; сначала проверьте JP3 и ревизию платы.</li>
               <li>Выходы — открытый сток: не подавайте постоянное напряжение на SMA RF_OUT.</li>
               <li>До +7 dBm на выходе: защищайте вход анализатора аттенюатором.</li>
-              <li>Опора на J1: синус/КМОП, уровень в пределах питания, без постоянной составляющей при AC-связи.</li>
+              <li>Опора на J1 требует доработки R20/R1/C3/R3/C4 по руководству, стр. 11; программного переключателя на плате нет.</li>
+              <li>Внешний SPI-мост — только с логикой 3.3 В. Изолируйте штатный U4 SC18IS602 от линий SPI перед подключением.</li>
               <li>Работайте с антистатическим браслетом — входы ГУН и опоры чувствительны к ESD.</li>
             </ul>
             <div className="mt-2 flex gap-1.5">
@@ -281,7 +282,7 @@ export function BoardView() {
               <Badge tone="muted">RF_OUTB не выведен</Badge>
             </div>
           </Card>
-          <Hint>Состояние элементов на рисунке живое: выбранная опора, перемычка CE, светодиод LD и активность выходов берутся из текущей конфигурации.</Hint>
+          <Hint>Рисунок отражает настройки модели и доступные показания связи. Положение перемычек и фактический монтаж опорного входа программа не считывает.</Hint>
         </div>
       </div>
     </div>

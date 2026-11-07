@@ -86,7 +86,7 @@ export const useStore = create<Store>((set, get) => ({
   call: async <T,>(cmd: string, args: Record<string, unknown> = {}, quiet = false): Promise<T | null> => {
     try {
       const r = await rpc<T>(cmd, args);
-      if (isSnapshot(r)) set({ snap: r });
+      if (isSnapshot(r)) set({ snap: r, ...(cmd === "connect" ? { status: null } : {}) });
       else if (r && typeof r === "object" && isSnapshot((r as { state?: unknown }).state)) {
         set({ snap: (r as unknown as { state: Snapshot }).state });
       }
@@ -160,9 +160,10 @@ export function useSnap() {
 
 /** Live simulator status (polled), falling back to the last snapshot. */
 export function useSim() {
+  const kind = useStore((s) => s.snap?.link.kind);
   const st = useStore((s) => s.status?.sim);
   const snapSim = useStore((s) => s.snap?.sim);
-  return st ?? snapSim ?? null;
+  return kind === "sim" ? st ?? snapSim ?? null : null;
 }
 
 export function useField(name: string): number {

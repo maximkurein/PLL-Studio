@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Cable, Cpu, Plug, RefreshCw, ScanSearch, Usb, Zap } from "lucide-react";
 import { useStore } from "../lib/store";
 import { fmtF } from "../lib/format";
-import type { PortInfo, UsbDev } from "../lib/types";
+import type { EvbUsbDevice, PortInfo, UsbDev } from "../lib/types";
 import { Badge, Button, Card, FreqField, Hint, Led, NumField, PageHeader, Row, Segmented, Select, Slider } from "../components/ui";
 
 const hex4 = (v: number) => v.toString(16).toUpperCase().padStart(4, "0");
@@ -60,6 +60,23 @@ export function HardwareView() {
   const [usb, setUsb] = useState<UsbDev[] | null>(null);
   const [port, setPort] = useState("");
   const [baud, setBaud] = useState(115200);
+  const [evbDevices, setEvbDevices] = useState<EvbUsbDevice[] | null>(null);
+  const [evbIndex, setEvbIndex] = useState("");
+  const [evbBusy, setEvbBusy] = useState(false);
+  const refreshEvb = async () => {
+    setEvbBusy(true);
+    try {
+      const devices = await call<EvbUsbDevice[]>("list_evb_usb");
+      if (devices) { setEvbDevices(devices); setEvbIndex(""); }
+    } finally { setEvbBusy(false); }
+  };
+  const connectEvb = async () => {
+    const device = evbIndex === "" ? undefined : evbDevices?.[Number(evbIndex)];
+    if (!device) return;
+    setEvbBusy(true);
+    try { await call("connect", { kind: "evb_usb", device: device.selector }); }
+    finally { setEvbBusy(false); }
+  };
 
   const refresh = async () => {
     const p = await call<PortInfo[]>("list_ports", {}, true);
@@ -75,6 +92,7 @@ export function HardwareView() {
 
   const scan = async () => setUsb((await call<UsbDev[]>("scan_usb")) ?? []);
   const isSim = snap.link.kind === "sim";
+  const ld = snap.link.caps.ld ? status?.ld : null;
   const maxMa = Math.max(...snap.power.domains.map((d) => d[1]), 1);
 
   return (
@@ -82,7 +100,7 @@ export function HardwareView() {
       <PageHeader
         icon={<Usb size={20} />}
         title="Подключение и железо"
-        subtitle="Работайте с виртуальным кристаллом (точная модель регистров, калибровки и захвата) или с реальной платой через последовательный SPI-мост."
+        subtitle="Работайте с виртуальным кристаллом (точная модель регистров, калибровки и захвата) или с реальной платой через штатный USB EVB / внешний последовательный SPI-мост."
       />
 
       <div className="grid gap-4 xl:grid-cols-2">
@@ -100,6 +118,34 @@ export function HardwareView() {
                 </Badge>
               ))}
             </div>
+          </div>
+
+          <div className="mt-4 rounded-xl border border-accent/30 p-3">
+            <div className="flex items-center gap-2 text-[12.5px] font-semibold">
+              <Usb size={14} className="text-accent" /> Штатный USB платы EVB
+              <Badge tone="warn">экспериментальный</Badge>
+            </div>
+            <p className="text-[11.5px] text-muted mt-1 leading-relaxed">
+              FT2232 → SC18IS602, Rev A. Внешний SPI-мост не нужен. Выберите именно плату EVB:
+              одинаковый USB ID встречается у других устройств FT2232. Закройте Timing Commander.
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Select className="flex-1 min-w-48" value={evbIndex} onChange={setEvbIndex}
+                options={[{ value: "", label: "Выберите плату после поиска" }, ...(evbDevices ?? []).map((d, i) => ({
+                  value: String(i), label: `${d.product ?? "FT2232"} · USB ${d.selector.bus}:${d.selector.address}${d.selector.serial ? ` · ${d.selector.serial}` : ""}`,
+                }))]} />
+              <Button size="sm" disabled={evbBusy} onClick={refreshEvb}>Найти EVB</Button>
+              <Button size="sm" variant="primary" disabled={evbBusy || evbIndex === "" || snap.link.kind === "evb_usb"} onClick={connectEvb}>
+                {evbBusy ? "Обмен…" : "Подключить USB"}
+              </Button>
+              {snap.link.kind === "evb_usb" && <Button size="sm" onClick={() => call("connect", { kind: "sim" })}>Отключить USB</Button>}
+            </div>
+            {evbDevices?.length === 0 && <p className="mt-2 text-[12px] text-muted">FT2232 (0403:6010) не найден. Подключите EVB к компьютеру, на котором запущен PLL Studio.</p>}
+            <Hint>
+              При подключении регистры PLL не записываются, авто-запись выключается. Проверьте частоту и нажмите «Записать», затем «Регистры» → «Прочитать все».
+              CE/MUTE задаются JP2/JP1; LD проверяется на плате. Windows: нужен WinUSB для канала A.
+              Для чтения требуется замкнутая цепь MUX_OUT → MISO: на схеме Rev A резистор R2 помечен NP.
+            </Hint>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -143,14 +189,14 @@ export function HardwareView() {
 
         <Card title="Управляющие выводы и опора" icon={<Zap size={15} />}>
           <Row label="CE (Chip Enable)">
-            <Segmented value={snap.pins.ce ? 1 : 0} onChange={(v) => call("set_pins", { ce: v === 1 })} options={[{ value: 1, label: "1 — работа" }, { value: 0, label: "0 — выкл" }]} />
+            {snap.link.caps.ce ? <Segmented value={snap.pins.ce ? 1 : 0} onChange={(v) => call("set_pins", { ce: v === 1 })} options={[{ value: 1, label: "1 — работа" }, { value: 0, label: "0 — выкл" }]} /> : <span className="text-[12px] text-muted">JP2 — положение не считывается</span>}
           </Row>
           <Row label="MUTE (активный 0)">
-            <Segmented value={snap.pins.muted ? 1 : 0} onChange={(v) => call("set_pins", { muted: v === 1 })} options={[{ value: 0, label: "выходы активны" }, { value: 1, label: "заглушить" }]} />
+            {snap.link.caps.mute ? <Segmented value={snap.pins.muted ? 1 : 0} onChange={(v) => call("set_pins", { muted: v === 1 })} options={[{ value: 0, label: "выходы активны" }, { value: 1, label: "заглушить" }]} /> : <span className="text-[12px] text-muted">JP1 / поля RF_OUTA_EN и RF_OUTB_EN</span>}
           </Row>
           <Row label="Вывод LD">
-            <Led tone={status?.ld == null ? "off" : status.ld ? "ok" : "err"} />
-            <span className="text-[12px] text-fg2">{status?.ld == null ? "не читается" : status.ld ? "1 — захват" : "0 — нет захвата"}</span>
+            <Led tone={ld == null ? "off" : ld ? "ok" : "err"} />
+            <span className="text-[12px] text-fg2">{ld == null ? "не читается" : ld ? "1 — захват" : "0 — нет захвата"}</span>
           </Row>
           <Row label="Источник опоры">
             <Segmented value={snap.settings.ref_source} onChange={(v) => setSettings({ ref_source: v })} options={[{ value: "tcxo", label: "TCXO 25 МГц" }, { value: "sma", label: "SMA J1" }]} />
@@ -160,7 +206,8 @@ export function HardwareView() {
               <FreqField hz={snap.settings.ref_hz} onCommit={(v) => setSettings({ ref_hz: v })} width="w-32" />
             </Row>
           )}
-          <Row label="RCP" hint="резистор тока накачки, на EVB 5.1 кОм">
+          <Hint>Выбор опоры задаёт параметры расчёта. Для J1 требуется доработка платы: R20/R1/C3/R3/C4 по руководству EVB, стр. 11.</Hint>
+          <Row label="RCP" hint="R5 = 4.7 кОм по схеме EVB Rev A">
             <NumField value={snap.settings.rcp_ohm} min={2700} max={10000} onCommit={(v) => setSettings({ rcp_ohm: v })} unit="Ом" width="w-16" />
           </Row>
           <Row label={`Окружающая ${snap.settings.ambient_c.toFixed(0)} °C`} hint="для оценки Tj">
@@ -187,16 +234,15 @@ export function HardwareView() {
             </div>
           )}
           <Hint>
-            Штатный мост EVB работает с драйвером Timing Commander (Windows). Если сканер покажет его VID:PID — сообщите, и можно добавить нативный драйвер. До тех пор
-            используйте внешний SPI-мост (прошивка в <span className="kbd">firmware/spi_bridge</span>).
+            Штатный путь EVB Rev A: FTDI U5 → I²C → SC18IS602 U4 → SPI. Для подключения используйте «Штатный USB платы EVB» выше.
+            Сканер читает только USB-дескрипторы; совпадение VID:PID не подтверждает модель платы.
           </Hint>
         </Card>
 
         <Card title="Схема подключения внешнего моста" icon={<Cable size={15} />} subtitle="Логика кристалла 1.8 В, входы толерантны к 3.3 В. Только 3.3-вольтовые платы!">
           <Wiring />
           <Hint tone="warn">
-            Перед подключением внешнего моста изолируйте штатный USB-контроллер EVB от линий SPI (снимите перемычки / удерживайте его в сбросе) — иначе два ведущих устройства
-            будут бороться за шину. Сверьтесь со схемой вашей ревизии платы.
+            Перед подключением внешнего моста изолируйте выходы U4 SC18IS602 от SCLK, SDI и CSB — иначе два ведущих устройства будут бороться за шину. JP1/JP2 управляют MUTE/CE, JP3 — питанием; это не перемычки изоляции SPI. Способ изоляции проверьте по схеме вашей ревизии.
           </Hint>
         </Card>
 

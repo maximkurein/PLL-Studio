@@ -16,3 +16,6 @@ src-tauri/gen
 
 # локальная конфигурация Claude Code
 .claude/settings.local.json
+
+# локальные материалы производителя (PDF, CAD, установщики и примеры)
+/info/
