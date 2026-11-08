@@ -1,4 +1,4 @@
-# PLL Studio v0.1.0
+# PLL Studio v0.1.1
 
 <p align="center">
   <img src="docs/images/banner.svg" alt="PLL Studio — интерактивная лаборатория RF-синтезатора IDT/Renesas 8V97051" width="100%">
@@ -142,7 +142,9 @@ npm run app
 npm run web          # собрать фронтенд и запустить сервер на http://127.0.0.1:7878
 ```
 
-Горячие клавиши: <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>1</kbd>…<kbd>9</kbd> — экраны, <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>J</kbd> — SPI-консоль. Все команды проекта: `make help`.
+Горячие клавиши: <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>1</kbd>…<kbd>9</kbd> — экраны в порядке бокового меню; <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>0</kbd> — «О программе»; <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>J</kbd> — SPI-консоль. Все команды проекта: `make help`.
+
+Экран **«О программе»** показывает версию, дату выпуска, разработчика, лицензию и текущее подключение. Открывается также кнопкой ℹ в верхней панели и нажатием на версию внизу меню. Ссылки GitHub и Forgejo открываются в браузере; команды `git clone` копируются одним нажатием. Сведения поступают из ядра через `get_meta.app`, их единственный источник — `config/version.json`.
 
 ## Подключение к плате
 
@@ -206,6 +208,22 @@ config/version.json единственный источник версии
 - RF_OUTB на плате EVB не разведён на разъёмы.
 - Штатный USB-транспорт реализован по схеме Rev A и документированным протоколам, на физической EVB подтверждены запись и readback R0–R7, DEV_ID и перестановка INT=100→101→100. Для чтения нужна замкнутая цепь R2 (на схеме NP); тест проведён с временной перемычкой. RF-параметры измерительными приборами пока не проверены. Обмен через GPIO FT2232 медленный; для быстрых свипов используйте внешний SPI-мост. Windows требует WinUSB на канале A.
 
-## Лицензия
+## Репозитории
 
-[MIT](LICENSE)
+- [GitHub — основной репозиторий](https://github.com/maximkurein/PLL-Studio)
+- [Forgejo — зеркало в локальной сети](http://100.64.0.12:3000/mxm/PLL-Studio) (нужен доступ к этой сети)
+
+Для нового локального репозитория без настроенных remotes:
+
+```bash
+git remote add origin https://github.com/maximkurein/PLL-Studio.git
+git remote add forgejo http://100.64.0.12:3000/mxm/PLL-Studio.git
+git push -u origin main
+git push forgejo main
+```
+
+В текущем рабочем репозитории `origin` уже настроен с двумя адресами push (GitHub и Forgejo по SSH); повторно добавлять его не требуется.
+
+## Автор и лицензия
+
+Разработчик: **Kurein M N**. Copyright © 2026 Kurein M N. Лицензия — [MIT](LICENSE); программа предоставляется «как есть», без гарантий.

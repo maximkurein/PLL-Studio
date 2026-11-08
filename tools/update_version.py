@@ -4,7 +4,8 @@
 Единственный источник версии — config/version.json (app_info).
 Скрипт синхронизирует её во все файлы, где версия должна совпадать:
 Cargo.toml (workspace), Cargo.lock, package.json, package-lock.json,
-src-tauri/tauri.conf.json, README.md и шаблон баг-репорта.
+src-tauri/tauri.conf.json, about.rs, LICENSE, README.md и шаблон баг-репорта.
+Автор, лицензия и репозитории также синхронизируются из app_info.
 
 Только стандартная библиотека Python — venv не нужен.
 
@@ -31,6 +32,8 @@ PACKAGE_LOCK = ROOT / "package-lock.json"
 TAURI_CONF = ROOT / "src-tauri" / "tauri.conf.json"
 README = ROOT / "README.md"
 BUG_TEMPLATE = ROOT / ".github" / "ISSUE_TEMPLATE" / "bug.yml"
+ABOUT = ROOT / "crates" / "pll-core" / "src" / "about.rs"
+LICENSE = ROOT / "LICENSE"
 
 # crates of this workspace (their entries in Cargo.lock carry the app version)
 WORKSPACE_CRATES = ("pll-core", "pll-server", "pll-studio")
@@ -49,7 +52,7 @@ def read(path: Path) -> str:
 
 
 def write(path: Path, text: str, dry: bool) -> None:
-    if read(path) == text:
+    if path.exists() and read(path) == text:
         print(f"Unchanged {rel(path)}")
         return
     if dry:
@@ -96,6 +99,9 @@ def replace_once(text: str, pattern: str, repl: str, what: str, flags: int = 0) 
 def get_source() -> dict:
     info = load_json(SOURCE)["app_info"]
     parse_semver(info["version"])
+    for key in ("name", "author", "license", "repository", "mirror", "release_date"):
+        if not isinstance(info[key], str) or not info[key].strip():
+            raise ValueError(f"Пустое поле app_info.{key}")
     return info
 
 
@@ -111,155 +117,122 @@ def set_source(meta: dict, dry: bool) -> None:
 
 # ───────────────────────── tracked files ─────────────────────────
 
-def cargo_get() -> str | None:
-    m = re.search(r'\[workspace\.package\][^\[]*?^version\s*=\s*"([^"]+)"', read(CARGO_TOML), re.M | re.S)
-    return m.group(1) if m else None
+def copyright_line(info: dict) -> str:
+    return f"Copyright (c) {info['release_date'][-4:]} {info['author']}"
 
 
-def cargo_set(v: str, dry: bool) -> None:
-    t = read(CARGO_TOML)
-    t = replace_once(t, r'(\[workspace\.package\][^\[]*?^version\s*=\s*")[^"]+(")', rf"\g<1>{v}\g<2>", "Cargo.toml [workspace.package] version", re.M | re.S)
-    write(CARGO_TOML, t, dry)
+def about_text(info: dict) -> str:
+    constants = "\n".join(
+        f"pub const {key.upper()}: &str = {json.dumps(info[key], ensure_ascii=False)};"
+        for key in ("name", "version", "release_date", "author", "license", "repository", "mirror")
+    )
+    return """// Значения синхронизируются из config/version.json, вручную не править.
+// Обновление: python3 tools/update_version.py sync
+
+""" + constants + """
+
+pub fn title() -> String {
+    format!("{NAME} v{VERSION} · {AUTHOR}")
+}
+
+pub fn info() -> serde_json::Value {
+    serde_json::json!({
+        "name": NAME, "version": VERSION, "release_date": RELEASE_DATE,
+        "author": AUTHOR, "license": LICENSE, "repository": REPOSITORY, "mirror": MIRROR,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn version_matches_package_and_source() {
+        assert_eq!(VERSION, env!("CARGO_PKG_VERSION"));
+        let source: serde_json::Value = serde_json::from_str(include_str!("../../../config/version.json")).unwrap();
+        for key in ["name", "version", "release_date", "author", "license", "repository", "mirror"] {
+            assert_eq!(info()[key], source["app_info"][key], "{key}");
+        }
+        assert_eq!(title(), format!("{} v{} · {}", NAME, VERSION, AUTHOR));
+    }
+}
+"""
 
 
-def lock_get() -> str | None:
-    if not CARGO_LOCK.exists():
-        return None
-    vals = set()
-    for c in WORKSPACE_CRATES:
-        m = re.search(rf'^name = "{re.escape(c)}"\r?\nversion = "([^"]+)"', read(CARGO_LOCK), re.M)
-        if m:
-            vals.add(m.group(1))
-    if len(vals) == 1:
-        return vals.pop()
-    return "mixed" if vals else None
-
-
-def lock_set(v: str, dry: bool) -> None:
-    if not CARGO_LOCK.exists():
-        print("Skip Cargo.lock (нет файла — будет создан при первой сборке)")
-        return
-    t = read(CARGO_LOCK)
-    for c in WORKSPACE_CRATES:
-        if re.search(rf'^name = "{re.escape(c)}"$', t, re.M):
-            t = replace_once(t, rf'(^name = "{re.escape(c)}"\r?\nversion = ")[^"]+(")', rf"\g<1>{v}\g<2>", f"Cargo.lock ({c})", re.M)
-    write(CARGO_LOCK, t, dry)
-
-
-def json_get(path: Path, *keys: str) -> str | None:
-    if not path.exists():
-        return None
-    d = load_json(path)
-    for k in keys:
-        d = d.get(k, {}) if isinstance(d, dict) else {}
-    return d if isinstance(d, str) else None
-
-
-def npm_set(v: str, dry: bool) -> None:
-    t = read(PACKAGE_JSON)
-    t = replace_once(t, r'("version"\s*:\s*")[^"]+(")', rf"\g<1>{v}\g<2>", "package.json version")
-    write(PACKAGE_JSON, t, dry)
-
-
-def npm_lock_get() -> str | None:
-    if not PACKAGE_LOCK.exists():
-        return None
-    d = load_json(PACKAGE_LOCK)
-    a = d.get("version")
-    b = d.get("packages", {}).get("", {}).get("version")
-    return a if a == b else "mixed"
-
-
-def npm_lock_set(v: str, dry: bool) -> None:
-    if not PACKAGE_LOCK.exists():
-        print("Skip package-lock.json (нет файла — появится после npm install)")
-        return
-    d = load_json(PACKAGE_LOCK)
-    d["version"] = v
-    d.setdefault("packages", {}).setdefault("", {})["version"] = v
-    write(PACKAGE_LOCK, dump_json(d), dry)
-
-
-def tauri_set(v: str, dry: bool) -> None:
-    t = read(TAURI_CONF)
-    t = replace_once(t, r'("version"\s*:\s*")[^"]+(")', rf"\g<1>{v}\g<2>", "tauri.conf.json version")
-    write(TAURI_CONF, t, dry)
-
-
-def readme_get() -> str | None:
-    if not README.exists():
-        return None
-    m = re.search(r"^# PLL Studio v(\d+\.\d+\.\d+)", read(README), re.M)
-    return m.group(1) if m else None
-
-
-def readme_set(v: str, dry: bool) -> None:
-    t = read(README)
-    t = replace_once(t, r"^# PLL Studio v\d+\.\d+\.\d+", f"# PLL Studio v{v}", "заголовок README.md", re.M)
-    write(README, t, dry)
-
-
-def bug_get() -> str | None:
-    if not BUG_TEMPLATE.exists():
-        return None
-    m = re.search(r'id: version.*?placeholder: "([^"]+)"', read(BUG_TEMPLATE), re.S)
-    return m.group(1) if m else None
-
-
-def bug_set(v: str, dry: bool) -> None:
-    t = read(BUG_TEMPLATE)
-    t = replace_once(t, r'(id: version.*?placeholder: ")[^"]+(")', rf"\g<1>{v}\g<2>", "placeholder версии в bug.yml", re.S)
-    write(BUG_TEMPLATE, t, dry)
-
-
-TRACKED = [
-    # label, file, getter, setter
-    ("cargo", CARGO_TOML, cargo_get, cargo_set),
-    ("cargo_lock", CARGO_LOCK, lock_get, lock_set),
-    ("npm", PACKAGE_JSON, lambda: json_get(PACKAGE_JSON, "version"), npm_set),
-    ("npm_lock", PACKAGE_LOCK, npm_lock_get, npm_lock_set),
-    ("tauri", TAURI_CONF, lambda: json_get(TAURI_CONF, "version"), tauri_set),
-    ("readme", README, readme_get, readme_set),
-    ("bug_form", BUG_TEMPLATE, bug_get, bug_set),
-]
+def targets(info: dict) -> list[tuple[str, Path, str]]:
+    """Expected contents, derived from the source while preserving unrelated settings."""
+    v = info["version"]
+    cargo = read(CARGO_TOML)
+    section = re.search(r"(\[workspace\.package\]\n)(.*?)(?=^\[|\Z)", cargo, re.M | re.S)
+    if not section:
+        raise RuntimeError("Нет [workspace.package] в Cargo.toml")
+    body = section.group(2)
+    for key, value in dict(version=v, authors=[info["author"]], repository=info["repository"], license=info["license"]).items():
+        line = f"{key} = {json.dumps(value, ensure_ascii=False)}"
+        if re.search(rf"^{key}\s*=", body, re.M):
+            body = re.sub(rf"^{key}\s*=.*$", lambda _: line, body, count=1, flags=re.M)
+        else:
+            body = body.rstrip() + "\n" + line + "\n\n"
+    cargo = cargo[:section.start(2)] + body + cargo[section.end(2):]
+    result = [("cargo", CARGO_TOML, cargo)]
+    if CARGO_LOCK.exists():
+        lock = read(CARGO_LOCK)
+        for crate in WORKSPACE_CRATES:
+            lock = replace_once(lock, rf'(^name = "{re.escape(crate)}"\r?\nversion = ")[^"]+(")', rf"\g<1>{v}\g<2>", f"Cargo.lock ({crate})", re.M)
+        result.append(("cargo_lock", CARGO_LOCK, lock))
+    else:
+        result.append(("cargo_lock", CARGO_LOCK, ""))
+    package = load_json(PACKAGE_JSON)
+    package.update(version=v, author=info["author"], license=info["license"], repository={"type": "git", "url": info["repository"] + ".git"})
+    result.append(("npm", PACKAGE_JSON, dump_json(package)))
+    if PACKAGE_LOCK.exists():
+        lock = load_json(PACKAGE_LOCK)
+        lock["version"] = v
+        lock.setdefault("packages", {}).setdefault("", {}).update(version=v, license=info["license"])
+        result.append(("npm_lock", PACKAGE_LOCK, dump_json(lock)))
+    else:
+        result.append(("npm_lock", PACKAGE_LOCK, ""))
+    conf = load_json(TAURI_CONF)
+    conf.update(version=v, productName=info["name"])
+    conf["bundle"].update(publisher=info["author"], copyright=copyright_line(info), homepage=info["repository"], license=info["license"])
+    result.append(("tauri", TAURI_CONF, dump_json(conf)))
+    result.append(("about", ABOUT, about_text(info)))
+    result.append(("license", LICENSE, replace_once(read(LICENSE), r'^Copyright .*$', copyright_line(info), "LICENSE copyright", re.M)))
+    result.append(("readme", README, replace_once(read(README), r"^# PLL Studio v\d+\.\d+\.\d+", f"# PLL Studio v{v}", "заголовок README.md", re.M)))
+    result.append(("bug_form", BUG_TEMPLATE, replace_once(read(BUG_TEMPLATE), r'(id: version.*?placeholder: ")[^"]+(")', rf"\g<1>{v}\g<2>", "версия bug.yml", re.S)))
+    return result
 
 
 # ───────────────────────── commands ─────────────────────────
 
 def status() -> int:
     src = get_source()
-    v = src["version"]
-    print(f"Source  {rel(SOURCE)}: v{v}  (release {src.get('release_date', '?')}, updated {src.get('last_updated', '?')})\n")
+    print(f"Source  {rel(SOURCE)}: v{src['version']}  (release {src['release_date']}, updated {src['last_updated']})\n")
     bad = 0
-    for label, path, getter, _ in TRACKED:
-        if not path.exists():
-            print(f"  {label:<11} MISSING  {rel(path)}")
-            bad += 1
-            continue
-        got = getter()
-        state = "OK" if got == v else "DIFF"
-        if state != "OK":
-            bad += 1
-        print(f"  {label:<11} {state:<8} {rel(path):<36} {got}")
-    print()
+    for label, path, expected in targets(src):
+        state = "MISSING" if not path.exists() else "OK" if read(path) == expected else "DIFF"
+        bad += state != "OK"
+        print(f"  {label:<11} {state:<8} {rel(path)}")
     if bad:
-        print(f"{bad} file(s) out of sync — run: python3 tools/update_version.py sync")
+        print(f"\n{bad} file(s) out of sync — run: python3 tools/update_version.py sync")
         return 1
-    print("All tracked files match.")
+    print("\nAll tracked versions and app metadata match.")
     return 0
 
 
 def sync(meta: dict, dry: bool) -> None:
-    v = meta["version"]
-    print(f"Target version:      {v}")
-    print(f"Target release date: {meta['release_date']}")
-    print(f"Target last updated: {meta['last_updated']}\n")
-    set_source(meta, dry)
-    for label, path, _, setter in TRACKED:
-        if not path.exists() and label not in ("cargo_lock", "npm_lock"):
-            raise RuntimeError(f"Нет файла {rel(path)} ({label})")
-        setter(v, dry)
-    print("\nНе забудьте раздел в CHANGELOG.md: ## [%s] - %s" % (v, meta["last_updated"]))
+    info = {**get_source(), **meta}
+    print(f"Target version:      {info['version']}")
+    print(f"Target release date: {info['release_date']}")
+    print(f"Target last updated: {info['last_updated']}\n")
+    expected = targets(info)
+    set_source(info, dry)
+    for label, path, content in expected:
+        if label in ("cargo_lock", "npm_lock") and not path.exists():
+            print(f"Skip {rel(path)} (создаётся менеджером пакетов)")
+            continue
+        write(path, content, dry)
+    print("\nCHANGELOG.md: обновите раздел Unreleased; при выпуске переименуйте в ## [%s] - %s" % (info["version"], info["last_updated"]))
 
 
 def check_date(value: str, fmt: str, flag: str) -> str:

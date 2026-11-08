@@ -134,7 +134,7 @@ impl Engine {
             readback: None,
             link_error: None,
         };
-        e.note("Запуск: подключён виртуальный 8V97051 (симулятор)");
+        e.note(&format!("{}: подключён виртуальный 8V97051 (симулятор)", crate::about::title()));
         if e.auto_apply {
             let _ = e.apply();
         }
@@ -408,7 +408,11 @@ impl Engine {
             "pins": { "ce": self.ce, "muted": self.muted },
             "power": pw,
             "log_head": self.next_id - 1,
-            "readback": self.readback.map(|(w, v, m)| json!({"words": w, "valid": v, "matches": m})),
+            "readback": self.readback.map(|(w, v, m)| {
+                let fields: BTreeMap<_, _> = FIELDS.iter().filter(|f| v[f.reg])
+                    .map(|f| (f.name, f.get(&w))).collect();
+                json!({"words": w, "valid": v, "matches": m, "fields": fields})
+            }),
             "pending_db": pending,
             "loop": { "fc_hz": la.fc_hz, "pm_deg": la.pm_deg, "stable": la.stable },
             "sim": st,
@@ -479,7 +483,7 @@ impl Engine {
         let a = &args;
         match cmd {
             "get_state" => Ok(self.snapshot()),
-            "get_meta" => Ok(json!({ "fields": FIELDS, "defaults": regs::defaults(), "version": env!("CARGO_PKG_VERSION") })),
+            "get_meta" => Ok(json!({ "fields": FIELDS, "defaults": regs::defaults(), "version": crate::about::VERSION, "app": crate::about::info() })),
             "status" => Ok(self.status()),
 
             "set_field" => {
@@ -810,6 +814,23 @@ impl Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn readback_fields_only_include_observed_registers() {
+        let mut e = Engine::new(None);
+        assert!(e.snapshot()["readback"].is_null());
+        e.read_register(6).unwrap();
+        let partial = e.snapshot();
+        assert!(partial["readback"]["fields"].get("DIG_LOCK").is_some());
+        assert!(partial["readback"]["fields"].get("DEV_ID").is_none());
+        e.read_register(7).unwrap();
+        let complete = e.snapshot();
+        assert_eq!(complete["readback"]["fields"]["DEV_ID"], 6);
+        assert_eq!(complete["readback"]["fields"]["REV_ID"], 1);
+        assert_eq!(complete["fields"]["DEV_ID"], 0); // writable configuration stays separate
+        e.handle("connect", json!({"kind":"sim"})).unwrap();
+        assert!(e.snapshot()["readback"].is_null());
+    }
 
     struct TestUsbLink {
         chip: VirtualChip,

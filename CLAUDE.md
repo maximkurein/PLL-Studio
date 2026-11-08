@@ -26,6 +26,7 @@ python3 build_macos.py [--universal] [--with-server]   # .app + .dmg → release
 ## Versioning and releases
 
 - Single source of truth: `config/version.json` (`app_info.version`, `release_date`, `last_updated`). Never edit versions by hand. Use `python3 tools/update_version.py status | bump patch|minor|major | sync [X.Y.Z]`. It updates `Cargo.toml` (`[workspace.package]`), `Cargo.lock`, `package.json`, `package-lock.json`, `src-tauri/tauri.conf.json`, the README heading and `.github/ISSUE_TEMPLATE/bug.yml`.
+- App identity (`name`, `author`, `license`, `repository`, `mirror`) also lives in `app_info`. The same script generates `crates/pll-core/src/about.rs`, synchronizes package/bundle metadata and LICENSE copyright, and checks identity drift. Do not edit generated about constants manually. `get_meta.app` supplies the reactive About screen; use Cmd/Ctrl+0, or 1–9 for the other screens in sidebar order. `open_url` validates HTTP(S) and opens the system browser; never interpolate a URL into shell source.
 - `CHANGELOG.md` is hand-written (Keep a Changelog): `## [X.Y.Z] - YYYY-MM-DD`.
 - Commit subjects: user-facing description, then `; bump to X.Y.Z` when the version changes.
 - Build scripts refuse to build if `status` reports drift. Tag `vX.Y.Z` triggers `.github/workflows/release.yml` (tauri-action, draft release).

@@ -4,6 +4,8 @@ description = "PLL Studio — лаборатория RF-синтезатора 8
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+authors.workspace = true
+repository.workspace = true
 
 [lib]
 name = "pll_studio_lib"

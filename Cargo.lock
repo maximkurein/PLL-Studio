@@ -2375,7 +2375,7 @@ dependencies = [
 
 [[package]]
 name = "pll-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "nusb",
  "serde",
@@ -2386,7 +2386,7 @@ dependencies = [
 
 [[package]]
 name = "pll-server"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "axum",
  "pll-core",
@@ -2398,7 +2398,7 @@ dependencies = [
 
 [[package]]
 name = "pll-studio"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "pll-core",
  "serde_json",

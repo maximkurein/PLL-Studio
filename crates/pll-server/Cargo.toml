@@ -4,6 +4,8 @@ description = "Headless / remote-lab mode: serves the PLL Studio UI and RPC over
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+authors.workspace = true
+repository.workspace = true
 
 [dependencies]
 pll-core = { path = "../pll-core" }

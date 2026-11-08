@@ -21,6 +21,8 @@ jobs:
 
       - name: Версии синхронизированы
         run: python3 tools/update_version.py status
+      - name: Синхронизация версии и сведений о программе
+        run: python3 tools/test_update_version.py
 
       - name: Системные пакеты (WebKitGTK для Tauri, libudev для serialport)
         run: |
@@ -42,6 +44,8 @@ jobs:
         run: cargo test -p pll-core
       - name: Сервер и desktop компилируются
         run: cargo check -p pll-server -p pll-studio
+      - name: Проверка внешних ссылок desktop
+        run: cargo test -p pll-studio --lib
 
   desktop:
     name: Сборка ${{ matrix.name }}

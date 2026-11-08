@@ -4,6 +4,8 @@ description = "8V97051 RF synthesizer model: register map, frequency planner, lo
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+authors.workspace = true
+repository.workspace = true
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }

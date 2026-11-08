@@ -20,7 +20,7 @@ const REG_TITLES = [
   "16-битный режим, readback, sticky-флаги, ID (расширенный)",
 ];
 
-function BitGrid({ reg, word, fields, focus, onBit, onField }: { reg: number; word: number; fields: FieldDef[]; focus: string | null; onBit: (bit: number) => void; onField: (f: FieldDef) => void }) {
+function BitGrid({ reg, word, readWord, fields, focus, onBit, onField }: { reg: number; word: number; readWord?: number; fields: FieldDef[]; focus: string | null; onBit: (bit: number) => void; onField: (f: FieldDef) => void }) {
   const owner = useMemo(() => {
     const o: (FieldDef | null)[] = Array(32).fill(null);
     fields.forEach((f) => {
@@ -36,7 +36,8 @@ function BitGrid({ reg, word, fields, focus, onBit, onField }: { reg: number; wo
       <div className="grid grid-cols-[repeat(32,minmax(0,1fr))] gap-[2px]">
         {Array.from({ length: 32 }, (_, i) => 31 - i).map((b) => {
           const f = owner[b];
-          const v = (word >>> b) & 1;
+          const measured = f?.access === "ro" || f?.access === "sticky";
+          const v = measured ? (readWord == null ? null : (readWord >>> b) & 1) : (word >>> b) & 1;
           const isAddr = b < 3;
           const col = f ? colorOf(f) : undefined;
           return (
@@ -55,7 +56,7 @@ function BitGrid({ reg, word, fields, focus, onBit, onField }: { reg: number; wo
                 color: isAddr ? "var(--muted)" : v ? "var(--fg)" : "var(--muted)",
               }}
             >
-              {v}
+              {v ?? "?"}
             </button>
           );
         })}
@@ -193,6 +194,7 @@ export function RegistersView() {
                   <BitGrid
                     reg={r}
                     word={snap.regs[r]}
+                    readWord={rb?.valid[r] ? rb.words[r] : undefined}
                     fields={fieldsOf(r)}
                     focus={focusField}
                     onBit={(b) => {
@@ -218,6 +220,9 @@ export function RegistersView() {
           bodyClass="overflow-y-auto scroll-thin flex flex-col gap-2 min-h-0 flex-1"
         >
           <div ref={listRef} className="flex flex-col gap-2">
+            {fieldsOf(reg).some((f) => f.access === "ro" || f.access === "sticky") && (
+              <p className="text-[11.5px] text-muted px-1">RO и sticky — из последнего чтения. До чтения: «—» / «?». Остальные поля показывают конфигурацию для записи.</p>
+            )}
             {snap.pending_db.length > 0 && (
               <div className="text-[12px] rounded-lg border border-accent/30 bg-accent/8 px-3 py-2 text-fg2">
                 Ожидают записи R0 (двойная буферизация): <b className="text-accent">{snap.pending_db.join(", ")}</b>

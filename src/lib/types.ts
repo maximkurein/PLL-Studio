@@ -14,10 +14,21 @@ export interface FieldDef {
   double_buffered: boolean;
 }
 
+export interface AppInfo {
+  name: string;
+  version: string;
+  release_date: string;
+  author: string;
+  license: string;
+  repository: string;
+  mirror: string;
+}
+
 export interface Meta {
   fields: FieldDef[];
   defaults: number[];
   version: string;
+  app: AppInfo;
 }
 
 export interface Issue {
@@ -155,7 +166,7 @@ export interface Snapshot {
   pins: { ce: boolean; muted: boolean };
   power: PowerEstimate;
   log_head: number;
-  readback: { words: number[]; valid: boolean[]; matches: boolean[] } | null;
+  readback: { words: number[]; valid: boolean[]; matches: boolean[]; fields: Record<string, number> } | null;
   pending_db: string[];
   loop: { fc_hz: number; pm_deg: number; stable: boolean };
   sim: SimStatus | null;
@@ -299,4 +310,4 @@ export interface UsbDev {
   likely_bridge: boolean;
 }
 
-export type ViewId = "arch" | "board" | "planner" | "registers" | "loop" | "noise" | "lab" | "hardware" | "learn";
+export type ViewId = "arch" | "board" | "planner" | "registers" | "loop" | "noise" | "lab" | "hardware" | "learn" | "about";

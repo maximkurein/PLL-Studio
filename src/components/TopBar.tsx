@@ -1,4 +1,4 @@
-import { Moon, Power, Send, Sun, SquareTerminal, Volume2, VolumeX, Zap } from "lucide-react";
+import { Info, Moon, Power, Send, Sun, SquareTerminal, Volume2, VolumeX, Zap } from "lucide-react";
 import { lockInfo, useSim, useStore } from "../lib/store";
 import { isMac, isTauri } from "../lib/api";
 import { fmtF, fmtMHzGrouped } from "../lib/format";
@@ -18,6 +18,8 @@ function Readout({ label, value, color, big }: { label: string; value: string; c
 }
 
 export function TopBar() {
+  const app = useStore((s) => s.meta?.app);
+  const view = useStore((s) => s.view);
   const snap = useStore((s) => s.snap)!;
   const status = useStore((s) => s.status);
   const theme = useStore((s) => s.theme);
@@ -44,7 +46,7 @@ export function TopBar() {
         </div>
         <div className="leading-tight" data-tauri-drag-region>
           <div className="text-[13px] font-semibold tracking-tight" data-tauri-drag-region>
-            PLL Studio
+            {app?.name}
           </div>
           <div className="text-[10.5px] text-muted" data-tauri-drag-region>
             Renesas 8V97051 · EVB
@@ -116,6 +118,8 @@ export function TopBar() {
       </Button>
 
       <div className="flex items-center gap-1">
+        <Button size="sm" variant="ghost" icon={<Info size={14} />} active={view === "about"} onClick={() => go("about")}
+          title={app ? `О программе — ${app.name} v${app.version}, ${app.author}` : "О программе"} />
         <Button
           size="sm"
           variant="ghost"

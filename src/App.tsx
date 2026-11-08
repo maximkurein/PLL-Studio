@@ -14,6 +14,7 @@ import { NoiseView } from "./views/NoiseView";
 import { LabView } from "./views/LabView";
 import { HardwareView } from "./views/HardwareView";
 import { LearnView } from "./views/LearnView";
+import { AboutView } from "./views/AboutView";
 import type { ViewId } from "./lib/types";
 
 const VIEWS: Record<ViewId, () => ReactNode> = {
@@ -26,6 +27,7 @@ const VIEWS: Record<ViewId, () => ReactNode> = {
   lab: () => <LabView />,
   hardware: () => <HardwareView />,
   learn: () => <LearnView />,
+  about: () => <AboutView />,
 };
 
 export default function App() {
@@ -49,12 +51,12 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // keyboard shortcuts: ⌘/Ctrl+1…9 views, ⌘/Ctrl+` console
+  // keyboard shortcuts: ⌘/Ctrl+1…9 views, ⌘/Ctrl+0 About, ⌘/Ctrl+J console
   useEffect(() => {
-    const order: ViewId[] = ["arch", "board", "planner", "registers", "loop", "noise", "lab", "hardware", "learn"];
+    const order: ViewId[] = ["arch", "board", "registers", "planner", "loop", "noise", "lab", "hardware", "learn", "about"];
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
-      const n = Number(e.key);
+      const n = e.key === "0" ? 10 : Number(e.key);
       if (n >= 1 && n <= order.length) {
         e.preventDefault();
         useStore.getState().go(order[n - 1]);

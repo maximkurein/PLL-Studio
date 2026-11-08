@@ -3,9 +3,11 @@ resolver = "2"
 members = ["crates/pll-core", "crates/pll-server", "src-tauri"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
+authors = ["Kurein M N"]
+repository = "https://github.com/maximkurein/PLL-Studio"
 
 [profile.release]
 opt-level = 3

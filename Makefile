@@ -28,9 +28,11 @@ test: ## Тесты модели кристалла (pll-core)
 
 check: ## Полная проверка: версии, типы TS, сборка фронтенда, тесты, cargo check
 	$(PY) tools/update_version.py status
+	$(PY) tools/test_update_version.py
 	npm run build
 	cargo test -p pll-core
 	cargo check -p pll-server -p pll-studio
+	cargo test -p pll-studio --lib
 
 fmt: ## Форматирование Rust
 	cargo fmt --all

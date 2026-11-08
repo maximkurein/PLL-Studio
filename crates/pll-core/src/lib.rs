@@ -1,6 +1,7 @@
 //! PLL Studio core: everything about the IDT/Renesas 8V97051 wideband
 //! RF synthesizer that does not depend on a UI.
 
+pub mod about;
 pub mod api;
 pub mod loopfilter;
 pub mod noise;

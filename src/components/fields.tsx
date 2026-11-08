@@ -11,6 +11,7 @@ export function bitsLabel(f: { reg: number; msb: number; lsb: number }) {
 export function FieldControl({ name, compact, hideDesc }: { name: string; compact?: boolean; hideDesc?: boolean }) {
   const f = useStore((s) => s.fieldMap[name]);
   const v = useField(name);
+  const readValue = useStore((s) => s.snap?.readback?.fields?.[name]);
   const setField = useStore((s) => s.setField);
   const focus = useStore((s) => s.focus);
   const go = useStore((s) => s.go);
@@ -18,13 +19,15 @@ export function FieldControl({ name, compact, hideDesc }: { name: string; compac
   const width = f.msb - f.lsb + 1;
   const max = width >= 32 ? 0xffffffff : 2 ** width - 1;
   const ro = f.access !== "rw";
-  const optLabel = f.options.find((o) => o[0] === v)?.[1];
+  const measured = f.access === "ro" || f.access === "sticky";
+  const shown = measured ? readValue : v;
+  const optLabel = f.options.find((o) => o[0] === shown)?.[1];
 
   let control: React.ReactNode;
   if (ro) {
     control = (
-      <Badge tone={f.access === "sticky" ? "warn" : "muted"}>
-        {optLabel ?? v} · {f.access === "ro" ? "только чтение" : f.access === "sticky" ? "sticky" : "фиксировано"}
+      <Badge tone={f.access === "sticky" && shown === 1 ? "warn" : "muted"} title={measured ? "Значение последнего чтения регистра с платы или симулятора" : undefined}>
+        {optLabel ?? shown ?? "—"} · {f.access === "ro" ? "только чтение" : f.access === "sticky" ? "sticky" : "фиксировано"}
       </Badge>
     );
   } else if (f.options.length > 0 && f.options.length <= 4 && f.options.every((o) => o[1].length < 26)) {

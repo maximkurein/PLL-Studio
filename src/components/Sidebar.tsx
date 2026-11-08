@@ -6,6 +6,7 @@ import {
   Crosshair,
   FlaskConical,
   GraduationCap,
+  Info,
   Microchip,
   Thermometer,
   Usb,
@@ -25,6 +26,7 @@ const NAV: { id: ViewId; label: string; hint: string; icon: ReactNode; group: st
   { id: "lab", label: "Лаборатория", hint: "Свип, прыжки, эксперименты", icon: <FlaskConical size={16} />, group: "Практика" },
   { id: "hardware", label: "Подключение", hint: "USB/SPI-мост, симулятор", icon: <Usb size={16} />, group: "Практика" },
   { id: "learn", label: "Академия", hint: "Как работает PLL", icon: <GraduationCap size={16} />, group: "Практика" },
+  { id: "about", label: "О программе", hint: "Версия, автор, исходный код", icon: <Info size={16} />, group: "Приложение" },
 ];
 
 export function Sidebar() {
@@ -32,7 +34,7 @@ export function Sidebar() {
   const go = useStore((s) => s.go);
   const snap = useStore((s) => s.snap)!;
   const sim = useSim();
-  const version = useStore((s) => s.meta?.version);
+  const app = useStore((s) => s.meta?.app);
   let group = "";
 
   return (
@@ -56,7 +58,7 @@ export function Sidebar() {
                   <span className="block text-[12.5px] font-medium leading-tight">{n.label}</span>
                   <span className="block text-[10.5px] text-muted leading-tight truncate">{n.hint}</span>
                 </span>
-                <span className="ml-auto text-[10px] text-muted opacity-0 group-hover:opacity-100 num">{i + 1}</span>
+                <span className="ml-auto text-[10px] text-muted opacity-0 group-hover:opacity-100 num">{(i + 1) % 10}</span>
               </button>
             </div>
           );
@@ -98,10 +100,11 @@ export function Sidebar() {
           <span className="num">ЗФ {snap.loop.pm_deg.toFixed(0)}°</span>
         </div>
       </div>
-      {version && (
-        <div className="px-4 pb-3 -mt-1 text-[10.5px] text-muted num" title="Версия PLL Studio">
-          PLL Studio v{version}
-        </div>
+      {app && (
+        <button onClick={() => go("about")} className="px-4 pb-3 -mt-1 text-left text-[10.5px] text-muted hover:text-accent num" title={`О программе — ${app.name} v${app.version}, ${app.author}`}>
+          <span className="block">{app.name} v{app.version}</span>
+          <span className="block">{app.author}</span>
+        </button>
       )}
     </nav>
   );

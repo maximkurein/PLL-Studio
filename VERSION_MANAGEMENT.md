@@ -14,12 +14,16 @@
     "name": "PLL Studio",
     "version": "X.Y.Z",
     "release_date": "DD.MM.YYYY",
-    "last_updated": "YYYY-MM-DD"
+    "last_updated": "YYYY-MM-DD",
+    "author": "Kurein M N",
+    "license": "MIT",
+    "repository": "https://github.com/maximkurein/PLL-Studio",
+    "mirror": "http://100.64.0.12:3000/mxm/PLL-Studio"
   }
 }
 ```
 
-Версия в интерфейсе (внизу боковой панели) и в RPC `get_meta` берётся из `Cargo.toml` при компиляции (`CARGO_PKG_VERSION`), а тот синхронизируется из этого файла.
+Версия, название, дата выпуска, автор, лицензия и репозитории в интерфейсе поступают из `get_meta.app`. Ядро берёт их из генерируемого `crates/pll-core/src/about.rs`, синхронизируемого из этого файла. Модуль содержит константы, `info()` и `title()`; тест сверяет версию с `CARGO_PKG_VERSION` и все сведения с источником. Вручную модуль не редактируется. Изменив сведения в `app_info`, выполните `python3 tools/update_version.py sync`.
 
 ## Команды
 
@@ -56,16 +60,20 @@ Updated .github/ISSUE_TEMPLATE/bug.yml
 
 | Метка в `status` | Файл | Что меняется |
 |---|---|---|
-| `source` | `config/version.json` | `app_info.version` и даты |
-| `cargo` | `Cargo.toml` | `[workspace.package] version` (все крейты наследуют `version.workspace = true`) |
+| `source` | `config/version.json` | `app_info`: версия, даты и сведения о проекте |
+| `cargo` | `Cargo.toml` | `[workspace.package] version`, `authors`, `repository`, `license`; все крейты наследуют эти поля |
 | `cargo_lock` | `Cargo.lock` | версии `pll-core`, `pll-server`, `pll-studio` |
-| `npm` | `package.json` | `"version"` |
-| `npm_lock` | `package-lock.json` | `version` и `packages[""].version` |
-| `tauri` | `src-tauri/tauri.conf.json` | `"version"` — версия бандла `.app`, `.exe`, `.msi` |
+| `npm` | `package.json` | `version`, `author`, `license`, `repository` |
+| `npm_lock` | `package-lock.json` | `version`, `packages[""].version` и лицензия корневого пакета |
+| `tauri` | `src-tauri/tauri.conf.json` | версия и название бандла; `publisher`, `copyright`, `homepage`, `license` |
+| `about` | `crates/pll-core/src/about.rs` | все семь констант и метаданные для RPC `get_meta.app` |
+| `license` | `LICENSE` | строка копирайта: год даты выпуска и автор |
 | `readme` | `README.md` | заголовок `# PLL Studio vX.Y.Z` |
 | `bug_form` | `.github/ISSUE_TEMPLATE/bug.yml` | подсказка версии |
 
 Намеренно **не** синхронизируются: `CHANGELOG.md` (пишется вручную), упоминания версий в `docs/` (история), версия протокола прошивки `PLLBRIDGE 1.0` (меняется только при изменении протокола моста).
+
+`status` обнаруживает также расхождение автора, лицензии, репозиториев и даты в генерируемых сведениях. `make check` запускает пять проверок скрипта синхронизации: идемпотентность, изменение метаданных, dry-run без записи и восстановление отсутствующего модуля; отсутствующие lock-файлы отмечаются и создаются менеджерами пакетов.
 
 ## Чек-лист релиза
 

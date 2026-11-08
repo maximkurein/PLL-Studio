@@ -7,6 +7,26 @@ import { invoke } from "@tauri-apps/api/core";
 export const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 export const isMac = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAgent);
 
+/** Opens an HTTP(S) link in the system browser (desktop) or a separate tab (web). */
+export async function openUrl(url: string): Promise<void> {
+  const parsed = new URL(url);
+  if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Разрешены только ссылки HTTP/HTTPS");
+  if (isTauri) {
+    await invoke("open_url", { url });
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function rpc<T = unknown>(cmd: string, args: Record<string, unknown> = {}): Promise<T> {
   if (isTauri) {
     return invoke<T>("rpc", { cmd, args });

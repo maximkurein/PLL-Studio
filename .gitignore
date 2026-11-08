@@ -13,6 +13,7 @@ src-tauri/gen
 .vscode/*
 !.vscode/extensions.json
 .idea/
+__pycache__/
 
 # локальная конфигурация Claude Code
 .claude/settings.local.json
