@@ -29,6 +29,38 @@ export interface Meta {
   defaults: number[];
   version: string;
   app: AppInfo;
+  gen: { f_min: number; f_max: number; levels: number[] };
+}
+
+export interface GenPreset {
+  name: string;
+  hz: number;
+  level_dbm: number;
+}
+
+export interface Harmonic {
+  n: number;
+  f_hz: number;
+  vpk_in: number;
+  vpk_seen: number;
+  gain_db: number;
+}
+
+export interface ScopeView {
+  f_out: number;
+  bw_hz: number;
+  in_band: boolean;
+  level_dbm: number;
+  at_scope_dbm: number;
+  vpp_50: number;
+  vpp_seen: number;
+  rolloff_db: number;
+  harmonics: Harmonic[];
+  sine_like: boolean;
+  t_div_s: number;
+  v_div: number;
+  sample_rate_min: number;
+  notes: string[];
 }
 
 export interface Issue {
@@ -102,6 +134,9 @@ export interface Settings {
   jitter_f1: number;
   jitter_f2: number;
   residual_hz: number;
+  gen_presets: GenPreset[];
+  scope_bw_hz: number;
+  scope_atten_db: number;
 }
 
 export interface LinkInfo {
@@ -310,4 +345,4 @@ export interface UsbDev {
   likely_bridge: boolean;
 }
 
-export type ViewId = "arch" | "board" | "planner" | "registers" | "loop" | "noise" | "lab" | "hardware" | "learn" | "about";
+export type ViewId = "gen" | "arch" | "board" | "planner" | "registers" | "loop" | "noise" | "lab" | "hardware" | "learn" | "about";

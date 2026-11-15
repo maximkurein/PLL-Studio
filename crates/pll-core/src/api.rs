@@ -2,6 +2,7 @@
 //! SPI transaction log. Both the Tauri app and the HTTP server expose it
 //! through one JSON RPC: `handle(cmd, args) -> json`.
 
+use crate::generator;
 use crate::loopfilter::{self, DesignRequest, LoopFilter, LoopParams, TransientRequest};
 use crate::noise::{self, NoiseCtx, NoiseOptions, SpectrumRequest};
 use crate::plan::{self, Derived, PlanRequest};
@@ -34,6 +35,11 @@ pub struct Settings {
     pub jitter_f2: f64,
     /// Residual VCO error after band select used by the lock-time view.
     pub residual_hz: f64,
+    /// Generator screen: saved frequency/level memories.
+    pub gen_presets: Vec<generator::Preset>,
+    /// Oscilloscope used to check RF_OUTA: −3 dB bandwidth and the inline attenuator.
+    pub scope_bw_hz: f64,
+    pub scope_atten_db: f64,
 }
 
 impl Default for Settings {
@@ -51,6 +57,9 @@ impl Default for Settings {
             jitter_f1: 12e3,
             jitter_f2: 20e6,
             residual_hz: 5e6,
+            gen_presets: vec![],
+            scope_bw_hz: 600e6,
+            scope_atten_db: 0.0,
         }
     }
 }
@@ -380,6 +389,39 @@ impl Engine {
         }
     }
 
+    /// Plans `hz` on the current reference path (doubler, R, ÷2 kept so the
+    /// loop filter stays valid) and writes the solution into `regs`.
+    fn tune_regs(&mut self, hz: f64, step: Option<f64>) -> Result<plan::Candidate> {
+        let (lo, hi) = generator::range();
+        if !(lo * (1.0 - 1e-9)..=hi * (1.0 + 1e-9)).contains(&hz) {
+            return Err(Error::Invalid(format!("частота вне диапазона RF_OUTA {:.3}…{:.0} МГц", lo / 1e6, hi / 1e6)));
+        }
+        let d0 = self.derived();
+        let lp = self.loop_params(&d0);
+        let la = loopfilter::analyze(&self.settings.loop_filter, &lp);
+        let req = PlanRequest {
+            target_hz: hz,
+            ref_hz: self.settings.ref_hz,
+            channel_step_hz: step,
+            doubler: if d0.doubler { plan::Tri::On } else { plan::Tri::Off },
+            div2: if d0.div2 { plan::Tri::On } else { plan::Tri::Off },
+            r_fixed: Some(regs::get(&self.regs, "R_COUNTER").max(1)),
+            pfd_max_hz: plan::PFD_MAX_FRAC,
+            allow_16bit: true,
+            prefer_integer: false,
+            loop_bw_hz: la.fc_hz.max(1e3),
+            count: 1,
+        };
+        let res = plan::plan(&req);
+        let Some(c) = res.candidates.into_iter().next() else {
+            return Err(Error::Invalid(res.error.unwrap_or_else(|| "нет решения".into())));
+        };
+        for (k, v) in &c.fields {
+            regs::set(&mut self.regs, k, *v);
+        }
+        Ok(c)
+    }
+
     fn sim_status(&mut self) -> Option<crate::sim::SimStatus> {
         self.link.as_sim().map(|s| s.poll())
     }
@@ -483,7 +525,8 @@ impl Engine {
         let a = &args;
         match cmd {
             "get_state" => Ok(self.snapshot()),
-            "get_meta" => Ok(json!({ "fields": FIELDS, "defaults": regs::defaults(), "version": crate::about::VERSION, "app": crate::about::info() })),
+            "get_meta" => Ok(json!({ "fields": FIELDS, "defaults": regs::defaults(), "version": crate::about::VERSION, "app": crate::about::info(),
+                "gen": { "f_min": generator::range().0, "f_max": generator::range().1, "levels": generator::LEVELS.iter().map(|l| l.0).collect::<Vec<_>>() } })),
             "status" => Ok(self.status()),
 
             "set_field" => {
@@ -602,37 +645,45 @@ impl Engine {
             }
             "tune" => {
                 let hz: f64 = arg(a, "hz")?;
-                let d0 = self.derived();
-                let lp = self.loop_params(&d0);
-                let la = loopfilter::analyze(&self.settings.loop_filter, &lp);
-                let req = PlanRequest {
-                    target_hz: hz,
-                    ref_hz: self.settings.ref_hz,
-                    channel_step_hz: opt(a, "step_hz"),
-                    doubler: plan::Tri::Off,
-                    div2: plan::Tri::Off,
-                    r_fixed: Some(regs::get(&self.regs, "R_COUNTER").max(1)),
-                    pfd_max_hz: plan::PFD_MAX_FRAC,
-                    allow_16bit: true,
-                    prefer_integer: false,
-                    loop_bw_hz: la.fc_hz.max(1e3),
-                    count: 1,
-                };
-                // keep the current reference path so the loop filter stays valid
-                let mut req = req;
-                req.doubler = if d0.doubler { plan::Tri::On } else { plan::Tri::Off };
-                req.div2 = if d0.div2 { plan::Tri::On } else { plan::Tri::Off };
-                let res = plan::plan(&req);
-                let Some(c) = res.candidates.into_iter().next() else {
-                    return Err(Error::Invalid(res.error.unwrap_or_else(|| "нет решения".into())));
-                };
-                for (k, v) in &c.fields {
-                    regs::set(&mut self.regs, k, *v);
-                }
+                let c = self.tune_regs(hz, opt(a, "step_hz"))?;
                 self.persist();
                 self.apply()?;
                 let st = self.sim_status();
                 Ok(json!({ "candidate": c, "derived": self.derived(), "sim": st, "log_head": self.next_id - 1, "state": self.snapshot() }))
+            }
+            "gen_set" => {
+                // Generator: frequency / level / RF on-off, written to the chip at once
+                // (independent of auto-apply) so the output follows the controls.
+                let mut level = None;
+                if let Some(dbm) = opt::<f64>(a, "level_dbm") {
+                    let (l, code, hi) = generator::level_code(dbm);
+                    regs::set(&mut self.regs, "RF_OUTA_PWR", code);
+                    regs::set(&mut self.regs, "RF_OUTA_HI_PWR", hi as u32);
+                    level = Some(l);
+                }
+                if let Some(on) = opt::<bool>(a, "rf_on") {
+                    regs::set(&mut self.regs, "RF_OUTA_EN", on as u32);
+                    if on {
+                        regs::set(&mut self.regs, "POWER_DOWN", 0);
+                        regs::set(&mut self.regs, "VCO_POWER_DOWN", 0);
+                    }
+                }
+                let c = match opt::<f64>(a, "hz") {
+                    Some(hz) => Some(self.tune_regs(hz, opt(a, "step_hz"))?),
+                    None => None,
+                };
+                self.persist();
+                self.apply()?;
+                let st = self.sim_status();
+                Ok(json!({ "candidate": c, "level_dbm": level, "derived": self.derived(), "sim": st, "log_head": self.next_id - 1, "state": self.snapshot() }))
+            }
+            "gen_scope" => {
+                let d = self.derived();
+                let st = self.sim_status();
+                let live = st.map(|s| s.outputs_live).unwrap_or(d.out_a_en && !self.muted && self.ce);
+                let bw = opt(a, "bw_hz").unwrap_or(self.settings.scope_bw_hz);
+                let att = opt(a, "atten_db").unwrap_or(self.settings.scope_atten_db);
+                Ok(serde_json::to_value(generator::scope_view(d.f_out_a, d.pwr_a_dbm, live, bw, att))?)
             }
 
             "loop_analysis" => {
@@ -908,5 +959,23 @@ mod tests {
             e.handle(c, json!({})).unwrap();
         }
         e.handle("spectrum", json!({"span_hz": 10e6})).unwrap();
+    }
+
+    #[test]
+    fn generator_controls() {
+        let mut e = Engine::new(None);
+        e.handle("set_auto_apply", json!({"on": false})).unwrap();
+        let r = e.handle("gen_set", json!({"hz": 433.92e6, "level_dbm": 7.0, "rf_on": true})).unwrap();
+        let d = &r["derived"];
+        assert!((d["f_out_a"].as_f64().unwrap() - 433.92e6).abs() < 1.0);
+        assert_eq!(d["pwr_a_dbm"].as_f64().unwrap(), 7.0);
+        assert!(d["out_a_en"].as_bool().unwrap());
+        // written although auto-apply is off
+        assert!(r["state"]["dirty"].as_array().unwrap().iter().all(|x| !x.as_bool().unwrap()));
+        let r = e.handle("gen_set", json!({"rf_on": false})).unwrap();
+        assert!(!r["derived"]["out_a_en"].as_bool().unwrap());
+        assert!(e.handle("gen_set", json!({"hz": 10e6})).is_err());
+        let s = e.handle("gen_scope", json!({"bw_hz": 600e6})).unwrap();
+        assert!(s["in_band"].as_bool().unwrap());
     }
 }

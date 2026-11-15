@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Info,
   Microchip,
+  Radio,
   Thermometer,
   Usb,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import type { ViewId } from "../lib/types";
 import { cx } from "./ui";
 
 const NAV: { id: ViewId; label: string; hint: string; icon: ReactNode; group: string }[] = [
+  { id: "gen", label: "Генератор", hint: "Частота, уровень, свип", icon: <Radio size={16} />, group: "Прибор" },
   { id: "arch", label: "Архитектура", hint: "Блок-схема кристалла", icon: <Microchip size={16} />, group: "Устройство" },
   { id: "board", label: "Плата EVB", hint: "Разъёмы, джамперы, питание", icon: <CircuitBoard size={16} />, group: "Устройство" },
   { id: "registers", label: "Регистры", hint: "R0–R7, биты, чтение", icon: <Binary size={16} />, group: "Устройство" },
@@ -58,7 +60,7 @@ export function Sidebar() {
                   <span className="block text-[12.5px] font-medium leading-tight">{n.label}</span>
                   <span className="block text-[10.5px] text-muted leading-tight truncate">{n.hint}</span>
                 </span>
-                <span className="ml-auto text-[10px] text-muted opacity-0 group-hover:opacity-100 num">{(i + 1) % 10}</span>
+                <span className="ml-auto text-[10px] text-muted opacity-0 group-hover:opacity-100 num">{n.id === "about" ? "0" : i < 9 ? i + 1 : ""}</span>
               </button>
             </div>
           );

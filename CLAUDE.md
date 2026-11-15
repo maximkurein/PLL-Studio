@@ -40,11 +40,12 @@ python3 build_macos.py [--universal] [--with-server]   # .app + .dmg → release
 - `plan.rs` — `derive()` computes every derived quantity and the `issues` list (RU messages, `block` key for UI); `plan()` is an exact rational search (u128 mHz) over doubler/R/÷2/INT/FRAC/MOD.
 - `loopfilter.rs` — impedance, open/closed loop, `design()` (datasheet method, E12/E24 snap), non-linear RK4 `transient()`.
 - `noise.rs` — phase-noise contributions, jitter integration, spur estimates, virtual `spectrum()`.
+- `generator.rs` — RF_OUTA level table (PWR + HI_PWR → dBm) and the oscilloscope estimate (`scope_view`).
 - `sim.rs` — `VirtualChip`: written vs active registers (double buffering applied on R0 write), band-select calibration timing/failure, lock model, readback, sticky bits, temperature.
 - `transport.rs` — `Link` trait (sim, `SerialBridge` text protocol), port listing, USB scan with vendor hints.
 - `api.rs` — `Engine`: settings + regs persistence (JSON), auto-apply writes changed registers R7→R0, SPI transaction log (`Txn` with decoded field changes), snapshot.
 
-**Frontend** — `src/lib/store.ts` (zustand): `snap` (full snapshot after every mutating RPC), `status` (polled every 350 ms: sim lock/VTUNE/LD), log, view routing. `src/components/fields.tsx` renders any register field from metadata. Views live in `src/views/*View.tsx`; `ArchitectureView` is a hand-laid SVG (viewBox 1200×700) whose block ids match `FieldDef.block` and `src/lib/blocks.ts`. Charts are the in-house `components/Plot.tsx` (SVG, log axes, dual y, hover).
+**Frontend** — `src/lib/store.ts` (zustand): `snap` (full snapshot after every mutating RPC), `status` (polled every 350 ms: sim lock/VTUNE/LD), log, view routing. `src/components/fields.tsx` renders any register field from metadata. Views live in `src/views/*View.tsx`; `GeneratorView` (default screen) drives `gen_set`/`gen_scope` with a coalescing writer; `ArchitectureView` is a hand-laid SVG (viewBox 1200×700) whose block ids match `FieldDef.block` and `src/lib/blocks.ts`. Charts are the in-house `components/Plot.tsx` (SVG, log axes, dual y, hover).
 
 ## Conventions
 

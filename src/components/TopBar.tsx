@@ -57,8 +57,8 @@ export function TopBar() {
       <div className="h-7 w-px bg-line" />
 
       <button
-        onClick={() => go("planner")}
-        title="RF_OUTA — открыть планировщик частоты"
+        onClick={() => go("gen")}
+        title="RF_OUTA — открыть генератор"
         className="flex items-center gap-2.5 rounded-lg px-2 py-1 hover:bg-panel3 transition-colors min-w-0"
       >
         <Readout label={outLive ? "RF_OUTA" : "RF_OUTA · выкл"} value={`${fmtMHzGrouped(d.f_out_a)} МГц`} color={outLive ? "var(--rf)" : "var(--muted)"} big />

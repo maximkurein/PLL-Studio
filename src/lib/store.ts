@@ -59,7 +59,7 @@ export const useStore = create<Store>((set, get) => ({
   fieldMap: {},
   snap: null,
   status: null,
-  view: "arch",
+  view: "gen",
   block: "pfd",
   focusField: null,
   log: [],

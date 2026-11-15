@@ -3,6 +3,7 @@
 
 pub mod about;
 pub mod api;
+pub mod generator;
 pub mod loopfilter;
 pub mod noise;
 pub mod plan;

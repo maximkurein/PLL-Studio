@@ -15,9 +15,11 @@ import { LabView } from "./views/LabView";
 import { HardwareView } from "./views/HardwareView";
 import { LearnView } from "./views/LearnView";
 import { AboutView } from "./views/AboutView";
+import { GeneratorView } from "./views/GeneratorView";
 import type { ViewId } from "./lib/types";
 
 const VIEWS: Record<ViewId, () => ReactNode> = {
+  gen: () => <GeneratorView />,
   arch: () => <ArchitectureView />,
   board: () => <BoardView />,
   planner: () => <PlannerView />,
@@ -51,12 +53,17 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
-  // keyboard shortcuts: ⌘/Ctrl+1…9 views, ⌘/Ctrl+0 About, ⌘/Ctrl+J console
+  // keyboard shortcuts: ⌘/Ctrl+1…9 views in sidebar order, ⌘/Ctrl+0 About, ⌘/Ctrl+J console
   useEffect(() => {
-    const order: ViewId[] = ["arch", "board", "registers", "planner", "loop", "noise", "lab", "hardware", "learn", "about"];
+    const order: ViewId[] = ["gen", "arch", "board", "registers", "planner", "loop", "noise", "lab", "hardware"];
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
-      const n = e.key === "0" ? 10 : Number(e.key);
+      if (e.key === "0") {
+        e.preventDefault();
+        useStore.getState().go("about");
+        return;
+      }
+      const n = Number(e.key);
       if (n >= 1 && n <= order.length) {
         e.preventDefault();
         useStore.getState().go(order[n - 1]);
