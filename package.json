@@ -1,7 +1,7 @@
 {
   "name": "pll-studio",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "PLL Studio — interactive lab for the IDT/Renesas 8V97051 wideband RF synthesizer",
   "type": "module",
   "scripts": {

@@ -1,9 +1,9 @@
 {
   "app_info": {
     "name": "PLL Studio",
-    "version": "0.1.1",
-    "release_date": "08.11.2026",
-    "last_updated": "2026-11-08",
+    "version": "0.2.0",
+    "release_date": "15.11.2026",
+    "last_updated": "2026-11-15",
     "author": "Kurein M N",
     "license": "MIT",
     "repository": "https://github.com/maximkurein/PLL-Studio",

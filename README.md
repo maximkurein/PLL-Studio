@@ -1,4 +1,4 @@
-# PLL Studio v0.1.1
+# PLL Studio v0.2.0
 
 <p align="center">
   <img src="docs/images/banner.svg" alt="PLL Studio — интерактивная лаборатория RF-синтезатора IDT/Renesas 8V97051" width="100%">

@@ -2,8 +2,8 @@
 // Обновление: python3 tools/update_version.py sync
 
 pub const NAME: &str = "PLL Studio";
-pub const VERSION: &str = "0.1.1";
-pub const RELEASE_DATE: &str = "08.11.2026";
+pub const VERSION: &str = "0.2.0";
+pub const RELEASE_DATE: &str = "15.11.2026";
 pub const AUTHOR: &str = "Kurein M N";
 pub const LICENSE: &str = "MIT";
 pub const REPOSITORY: &str = "https://github.com/maximkurein/PLL-Studio";
